@@ -9,8 +9,8 @@ void framebuffer_size_callback(GLFWwindow*, int, int);
 void processInput(GLFWwindow*);
 
 // settings
-constexpr int g_winWidth{800};
-constexpr int g_winHeight{600};
+constexpr int kWinWidth{800};
+constexpr int kWinHeight{600};
 
 const char* vertexShaderSource{R"(
 #version 330 core
@@ -43,7 +43,7 @@ int main(void) {
 #endif
 
   GLFWwindow* window{
-      glfwCreateWindow(g_winWidth, g_winHeight, "Noddy", nullptr, nullptr)};
+      glfwCreateWindow(kWinWidth, kWinHeight, "Noddy", nullptr, nullptr)};
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
 
