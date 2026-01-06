@@ -1,9 +1,9 @@
 #!/bin/bash
 
 cmake -S . -B build
-cmake --build build/
 
-if [ $? -eq 0 ]; then
+if cmake --build build/
+then
   echo "Build successful. Running..."
   ./build/bin/noddy_gui
 else
