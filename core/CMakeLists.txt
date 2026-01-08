@@ -1,7 +1,8 @@
 # Library target
 add_library(noddy_core STATIC
-  ./src/Core.cpp
+  ./src/Utils.cpp
   ./src/Filter.cpp
+  ./src/Core.cpp
 )
 
 target_include_directories(noddy_core PUBLIC include)
