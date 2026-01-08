@@ -35,9 +35,10 @@ bool operator==(const Coeffs& first, const Coeffs& second) {
   return true;
 }
 
-void printCoeffs(Coeffs& filter) {
-  std::cout << "Numerator coeffs (b):\n" << filter.b << '\n';
-  std::cout << "Denominator coeffs (a):\n" << filter.a << '\n';
+std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) {
+  os << "b: " << coeffs.b.format(g_cleanFmt) << "\n";
+  os << "a: " << coeffs.a.format(g_cleanFmt) << "\n";
+  return os;
 }
 
 bool test_zpk2tf() {
@@ -55,17 +56,17 @@ bool test_zpk2tf() {
   Coeffs result{zpk2tf(filter)};
 
   std::cout << "--- ZPK to transfer function coefficients ---" << '\n';
-  printCoeffs(result);
+  std::cout << "Expected coeffs:\n" << expected << '\n';
+  std::cout << "Result coeffs:\n" << result << '\n';
 
   return (expected == result);
 }
 
-void printZPK(ZPK& filter) {
-  std::cout << "Gain: " << filter.k << '\n';
-  std::cout << "Zeros (" << filter.z.size()
-            << "): " << filter.z.format(g_cleanFmt) << '\n';
-  std::cout << "Poles (" << filter.p.size()
-            << "): " << filter.p.format(g_cleanFmt) << '\n';
+std::ostream& operator<<(std::ostream& os, const ZPK& zpk) {
+  os << "k: " << zpk.k << "\n";
+  os << "z: " << zpk.z.format(g_cleanFmt) << "\n";
+  os << "p: " << zpk.p.format(g_cleanFmt) << "\n";
+  return os;
 }
 
 bool test_filterDesign() {
@@ -80,7 +81,7 @@ bool test_filterDesign() {
     ZPK digitalFilter{iirFilter<buttap, ftype>(order, fc, fs)};
 
     std::cout << "--- Design Butterworth filter ---" << '\n';
-    printZPK(digitalFilter);
+    std::cout << digitalFilter << '\n';
   }
 
   { // Chebyshev I
@@ -89,7 +90,7 @@ bool test_filterDesign() {
     ZPK digitalFilter{iirFilter<cheb1ap, ftype>(order, fc, fs, rp)};
 
     std::cout << "--- Design Chebyshev I filter ---" << '\n';
-    printZPK(digitalFilter);
+    std::cout << digitalFilter << '\n';
   }
 
   { // Chebyshev II
@@ -98,7 +99,7 @@ bool test_filterDesign() {
     ZPK digitalFilter{iirFilter<cheb2ap, ftype>(order, fc, fs, rs)};
 
     std::cout << "--- Design Chebyshev II filter ---" << '\n';
-    printZPK(digitalFilter);
+    std::cout << digitalFilter << '\n';
   }
 
   return true;
