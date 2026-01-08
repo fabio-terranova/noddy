@@ -7,6 +7,9 @@ build
 # vscode
 .vscode
 
+# Python test scripts
+test.py
+
 # Prerequisites
 *.d
 

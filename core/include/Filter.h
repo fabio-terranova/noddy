@@ -8,6 +8,9 @@
 namespace Noddy {
 namespace Filter {
 using Eigen::Array2d;
+using Eigen::ArrayXcd;
+using Eigen::ArrayXd;
+using Eigen::ArrayXi;
 using Eigen::VectorXcd;
 using Complex = std::complex<double>;
 
@@ -19,7 +22,7 @@ struct Coeffs {
 struct ZPK {
   VectorXcd z{};
   VectorXcd p{};
-  double    k{1.0};
+  double    k{};
 };
 
 enum Type {

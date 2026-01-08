@@ -8,11 +8,6 @@
 
 namespace Noddy {
 namespace Filter {
-using Eigen::ArrayXcd;
-using Eigen::ArrayXd;
-using Eigen::ArrayXi;
-using Eigen::VectorXcd;
-
 ArrayXi arange(const int start, int stop, const int step) {
   if (step == 0)
     return ArrayXi{};
