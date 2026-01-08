@@ -35,6 +35,11 @@ bool operator==(const Coeffs& first, const Coeffs& second) {
   return true;
 }
 
+void printCoeffs(Coeffs& filter) {
+  std::cout << "Numerator coeffs (b):\n" << filter.b << '\n';
+  std::cout << "Denominator coeffs (a):\n" << filter.a << '\n';
+}
+
 bool test_zpk2tf() {
   using namespace Noddy::Filter;
 
@@ -49,6 +54,9 @@ bool test_zpk2tf() {
 
   Coeffs result{zpk2tf(filter)};
 
+  std::cout << "--- ZPK to transfer function coefficients ---" << '\n';
+  printCoeffs(result);
+
   return (expected == result);
 }
 
@@ -58,21 +66,6 @@ void printZPK(ZPK& filter) {
             << "): " << filter.z.format(g_cleanFmt) << '\n';
   std::cout << "Poles (" << filter.p.size()
             << "): " << filter.p.format(g_cleanFmt) << '\n';
-}
-
-bool test_bilinearTransform() {
-  double fs{100.0};
-  ZPK    analogFilter{VectorXcd{0}, VectorXcd{3}, 1.0};
-  analogFilter.p << Complex(-1.0, 2.0), Complex(-1.0, -1.0), Complex(-1.0, 3.0);
-
-  ZPK digitalFilter{Noddy::Filter::bilinearTransform(analogFilter, fs)};
-
-  std::cout << "--- Bilinear transform result ---" << '\n';
-  std::cout << "Gain (k): " << digitalFilter.k << '\n';
-  std::cout << "Poles (p):\n" << digitalFilter.p.format(g_cleanFmt) << '\n';
-  std::cout << "Zeros (z):\n" << digitalFilter.z.format(g_cleanFmt) << '\n';
-
-  return true;
 }
 
 bool test_filterDesign() {
