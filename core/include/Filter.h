@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <numbers>
+#include <cassert>
 
 namespace Noddy {
 namespace Filter {
