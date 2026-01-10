@@ -138,10 +138,10 @@ ZPK lp2hp(const ZPK& input, const double wc) {
 
 VectorXcd roots2poly(const VectorXcd& roots) {
   VectorXcd coeffs{1};
-  coeffs[0] = 1.0;
+  coeffs(0) = 1.0;
 
   for (int i{0}; i < roots.size(); ++i) {
-    const Complex& r{roots[i]};
+    const Complex& r{roots(i)};
 
     VectorXcd temp{VectorXcd::Zero(coeffs.size() + 1)};
     temp.head(coeffs.size()) += coeffs;

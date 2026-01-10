@@ -71,16 +71,12 @@ inline ZPK analog2digital(ZPK analog, double fc, double fs,
 
 template <ZPK (*F)(const int), Type type>
 ZPK iirFilter(const int n, double fc, double fs) {
-  ZPK analog{F(n)};
-
-  return analog2digital(analog, fc, fs, type);
+  return analog2digital(F(n), fc, fs, type);
 }
 
 template <ZPK (*F)(const int, const double), Type type>
 ZPK iirFilter(const int n, double fc, double fs, const double param) {
-  ZPK analog{F(n, param)};
-
-  return analog2digital(analog, fc, fs, type);
+  return analog2digital(F(n, param), fc, fs, type);
 }
 
 Coeffs zpk2tf(const ZPK& zpk);
