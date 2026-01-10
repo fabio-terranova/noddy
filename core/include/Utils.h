@@ -3,7 +3,7 @@
 
 #include <Eigen/Dense>
 
-const static Eigen::IOFormat g_cleanFmt(Eigen::StreamPrecision, 0, " ", "", "",
+inline const Eigen::IOFormat g_cleanFmt(Eigen::StreamPrecision, 0, " ", "", "",
                                         "", "[", "]");
 namespace Noddy {
 namespace Utils {
