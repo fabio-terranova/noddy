@@ -3,7 +3,6 @@
 #include <chrono>
 #include <iostream>
 
-using Noddy::Filter::Coeffs;
 using Noddy::Filter::Complex;
 using Noddy::Filter::ZPK;
 
