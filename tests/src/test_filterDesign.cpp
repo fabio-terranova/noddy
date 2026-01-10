@@ -1,26 +1,11 @@
 #include "Filter.h"
 #include "Utils.h"
-#include <chrono>
 #include <iostream>
 
 using Noddy::Filter::Complex;
 using Noddy::Filter::ZPK;
 using Noddy::Utils::cleanFmt;
-
-class Timer {
-  using Second = std::chrono::duration<double, std::ratio<1>>;
-  using Clock  = std::chrono::steady_clock;
-
-public:
-  void reset() { m_beg = Clock::now(); }
-
-  double elapsed() const {
-    return std::chrono::duration_cast<Second>(Clock::now() - m_beg).count();
-  }
-
-private:
-  std::chrono::time_point<Clock> m_beg{Clock::now()};
-};
+using Noddy::Utils::Timer;
 
 std::ostream& operator<<(std::ostream& os, const ZPK& zpk) {
   os << "k: " << zpk.k << "\n";
