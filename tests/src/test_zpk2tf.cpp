@@ -5,15 +5,6 @@ using Noddy::Filter::Coeffs;
 using Noddy::Filter::Complex;
 using Noddy::Filter::ZPK;
 
-bool operator==(const Coeffs& first, const Coeffs& second) {
-  if (first.a != second.a)
-    return false;
-  if (first.b != second.b)
-    return false;
-
-  return true;
-}
-
 bool test_zpk2tf() {
   using namespace Noddy::Filter;
 

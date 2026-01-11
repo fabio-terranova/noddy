@@ -7,6 +7,15 @@ namespace Filter {
 using Utils::arange;
 using Utils::cleanFmt;
 
+bool operator==(const Coeffs& first, const Coeffs& second) {
+  if (first.a != second.a)
+    return false;
+  if (first.b != second.b)
+    return false;
+
+  return true;
+}
+
 std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) {
   os << "b: " << coeffs.b.format(cleanFmt) << "\n";
   os << "a: " << coeffs.a.format(cleanFmt) << "\n";

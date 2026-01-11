@@ -27,13 +27,15 @@ struct Coeffs {
   VectorXd a{};
 };
 
+bool          operator==(const Coeffs& first, const Coeffs& second);
+std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs);
+
 struct ZPK {
   VectorXcd z{};
   VectorXcd p{};
   double    k{};
 };
 
-std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs);
 std::ostream& operator<<(std::ostream& os, const ZPK& zpk);
 
 enum Type {
