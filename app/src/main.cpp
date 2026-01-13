@@ -1,3 +1,7 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #define GLFW_INCLUDE_NONE
 
 #include "Core.h"
@@ -9,8 +13,8 @@ void framebuffer_size_callback(GLFWwindow*, int, int);
 void processInput(GLFWwindow*);
 
 // settings
-constexpr int kWinWidth{800};
-constexpr int kWinHeight{600};
+constexpr int kWinWidth{1600};
+constexpr int kWinHeight{1200};
 
 const char* vertexShaderSource{R"(
 #version 330 core
@@ -42,8 +46,10 @@ int main(void) {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+  float mainScale =
+      ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
   GLFWwindow* window{
-      glfwCreateWindow(kWinWidth, kWinHeight, "Noddy", nullptr, nullptr)};
+      glfwCreateWindow(kWinWidth, kWinHeight, "Noddy GUI", nullptr, nullptr)};
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
 
@@ -53,6 +59,7 @@ int main(void) {
 
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSwapInterval(1);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cerr << "Failed to initialize glad\n";
@@ -137,21 +144,57 @@ int main(void) {
   // Unbind the VAO so other VAO calls won't accidentally modify this VAO.
   glBindVertexArray(0);
 
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io{ImGui::GetIO()};
+  (void)io;
+  ImGui::StyleColorsDark();
+
+  // Setup scaling
+  ImGuiStyle& style{ImGui::GetStyle()};
+  style.ScaleAllSizes(mainScale);
+  style.FontScaleDpi = mainScale;
+
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init("#version 330 core");
+
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
     // draw the object
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    // Sample window showing current FPS
+    {
+      ImGui::Begin("Simple window");
+
+      ImGui::Text("FPS: %0.3f", ImGui::GetIO().Framerate);
+      if (ImGui::Button("Click me!"))
+        std::cout << "Button clicked!" << std::endl;
+
+      ImGui::End();
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     // swap buffers and poll IO events
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
 
   // optional: deallocate resources once outlived their purpose.
   glDeleteVertexArrays(1, &VAO);
