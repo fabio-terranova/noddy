@@ -7,9 +7,11 @@ build
 # vscode
 .vscode
 
+# imgui ini file
+imgui.ini
+
 # Python test scripts
 *.py
-data.txt
 
 # Prerequisites
 *.d
