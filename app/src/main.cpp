@@ -196,26 +196,22 @@ int main(void) {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    // Sample window showing current FPS
+    // Sample window
     {
       ImGui::Begin("Simple window");
       ImGui::Text("FPS: %0.3f", ImGui::GetIO().Framerate);
 
-      for (int i{}; i < 4; ++i) {
-        ImGui::PushID(i);
-        if (ImPlot::BeginPlot("")) {
-          ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations,
-                            ImPlotAxisFlags_NoDecorations);
-          ImGui::PushID(i);
-          ImPlot::PlotLine("Data", y_, y_size);
-          ImGui::PopID();
+      if (ImPlot::BeginPlot("")) {
+        ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations,
+                          ImPlotAxisFlags_NoDecorations);
+        ImPlot::PlotLine("Raw", y_, y_size);
 
+        for (int i{}; i < 4; ++i) {
           std::string fString{"Filtered (fc = " + std::to_string(100 - 25 * i) +
                               " Hz)"};
           ImPlot::PlotLine(fString.c_str(), fData[i].data(), fData[i].size());
-          ImPlot::EndPlot();
         }
-        ImGui::PopID();
+        ImPlot::EndPlot();
       }
 
       // ImGui::ShowStackToolWindow();
