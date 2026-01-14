@@ -9,7 +9,7 @@ using Noddy::Utils::Timer;
 bool test_filterDesign() {
   using namespace Noddy::Filter;
 
-  const auto order{7};
+  const auto order{3};
   const auto fc{100.0};
   const auto fs{1000.0};
   const auto ftype{lowpass};

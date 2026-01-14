@@ -1,39 +1,31 @@
 #ifndef INCLUDE_CORE_FILTER_H_
 #define INCLUDE_CORE_FILTER_H_
 
-#include <Eigen/Dense>
-#include <cassert>
+#include <complex>
 #include <numbers>
+#include <vector>
 
 namespace Noddy {
 namespace Filter {
 using namespace std::complex_literals;
 
-using Eigen::Array2d;
-using Eigen::ArrayX;
-using Eigen::ArrayXcd;
-using Eigen::ArrayXd;
-using Eigen::ArrayXi;
-using Eigen::VectorXcd;
-using Eigen::VectorXd;
-using Eigen::VectorXi;
-
 using std::numbers::pi;
 
 using Complex = std::complex<double>;
+using Signal  = std::vector<double>;
 
 struct Coeffs {
-  VectorXd b{};
-  VectorXd a{};
+  std::vector<double> b{};
+  std::vector<double> a{};
 };
 
 bool          operator==(const Coeffs& first, const Coeffs& second);
 std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs);
 
 struct ZPK {
-  VectorXcd z{};
-  VectorXcd p{};
-  double    k{};
+  std::vector<Complex> z{};
+  std::vector<Complex> p{};
+  double               k{};
 };
 
 std::ostream& operator<<(std::ostream& os, const ZPK& zpk);
@@ -69,12 +61,20 @@ ZPK iirFilter(const int n, double fc, double fs, const double param) {
 
 Coeffs zpk2tf(const ZPK& zpk);
 
-ArrayXd linearFilter(const Coeffs& filter, const VectorXd& x, VectorXd& si);
-ArrayXd linearFilter(const Coeffs& filter, const VectorXd& x);
-ArrayXd findEffectiveIR(const Coeffs& filter, const double epsilon = 1e-12,
-                        const int maxLength = 10000);
-ArrayXd fftFilter(const Coeffs& filter, const VectorXd& x,
-                  const double epsilon = 1e-12, const int maxLength = 10000);
+// Filtering functions (IIR compatible)
+Signal linearFilter(const Coeffs& filter, const std::vector<double>& x,
+                    std::vector<double>& si);
+Signal linearFilter(const Coeffs& filter, const std::vector<double>& x);
+
+// Caclulate the approximate impulse response of a filter. Useful to convert an
+// IIR filter to a FIR filter
+Signal findEffectiveIR(const Coeffs& filter, const double epsilon = 1e-12,
+                       const std::size_t maxLength = 10000);
+// fftFilter() uses findEffectiveIR() to transform the IIR filter to a FIR
+// filter and gets the filtered signal by convolution (fast convolution by
+// multiplication in the frequency domain, thus "fft" in the name)
+Signal fftFilter(const Coeffs& filter, const std::vector<double>& x,
+                 const double epsilon = 1e-12, const int maxLength = 10000);
 } // namespace Filter
 } // namespace Noddy
 
