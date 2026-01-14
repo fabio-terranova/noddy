@@ -1,5 +1,4 @@
 #define GLFW_INCLUDE_NONE
-
 #include "Core.h"
 #include "Filter.h"
 #include "ImNodeFlow.h"
@@ -12,63 +11,64 @@
 #include <iostream>
 #include <string>
 
+
+using Noddy::Filter::Signal;
+
 class DataNode : public ImFlow::BaseNode {
 public:
   DataNode() {
     setTitle("Data");
     setStyle(ImFlow::NodeStyle::green());
-    ImFlow::BaseNode::addIN<Eigen::VectorXd>(
-        "in", Eigen::VectorXd{}, ImFlow::ConnectionFilter::SameType());
-    ImFlow::BaseNode::addOUT<Eigen::VectorXd>("out", nullptr)
-        ->behaviour([this]() { return data_; });
+    ImFlow::BaseNode::addIN<Signal>("in", Signal{},
+                                    ImFlow::ConnectionFilter::SameType());
+    ImFlow::BaseNode::addOUT<Signal>("out", nullptr)->behaviour([this]() {
+      return data_;
+    });
   }
 
   void draw() override {
     ImGui::SetNextItemWidth(100.f);
-    if (ImPlot::BeginPlot("", ImVec2(250, 150))) {
+    if (ImPlot::BeginPlot("", ImVec2(300, 150))) {
       ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations,
                         ImPlotAxisFlags_NoDecorations);
       if (isSource_)
         ImPlot::PlotLine("", data_.data(), static_cast<int>(data_.size()));
       else
-        ImPlot::PlotLine(
-            "", getInVal<Eigen::VectorXd>("in").data(),
-            static_cast<int>(getInVal<Eigen::VectorXd>("in").size()));
+        ImPlot::PlotLine("", getInVal<Signal>("in").data(),
+                         static_cast<int>(getInVal<Signal>("in").size()));
 
       ImPlot::EndPlot();
     }
   }
 
-  void setData(const Eigen::VectorXd& data) {
+  void setData(const Signal& data) {
     isSource_ = true;
     data_     = data;
   };
 
 private:
-  bool            isSource_{false};
-  Eigen::VectorXd data_{};
+  bool   isSource_{false};
+  Signal data_{};
 };
 
-class ButterNode : public ImFlow::BaseNode {
+class FilterNode : public ImFlow::BaseNode {
 public:
-  ButterNode() {
+  FilterNode() {
     setTitle("Lowpass");
     setStyle(ImFlow::NodeStyle::brown());
-    ImFlow::BaseNode::addIN<Eigen::VectorXd>(
-        "in", Eigen::VectorXd{}, ImFlow::ConnectionFilter::SameType());
-    ImFlow::BaseNode::addOUT<Eigen::VectorXd>("out", nullptr)
-        ->behaviour([this]() {
-          int    filterOrder{4};
-          double fs{1000.0};
-          double fc{25.0};
+    ImFlow::BaseNode::addIN<Signal>("in", Signal(),
+                                    ImFlow::ConnectionFilter::SameType());
+    ImFlow::BaseNode::addOUT<Signal>("out", nullptr)->behaviour([this]() {
+      int    filterOrder{2};
+      double fs{1000.0};
+      double fc{50.0};
 
-          auto filter{Noddy::Filter::zpk2tf(
-              Noddy::Filter::iirFilter<Noddy::Filter::buttap,
-                                       Noddy::Filter::lowpass>(filterOrder, fc,
-                                                               fs))};
-          return Noddy::Filter::linearFilter(filter,
-                                             getInVal<Eigen::VectorXd>("in"));
-        });
+      auto filter{Noddy::Filter::zpk2tf(
+          Noddy::Filter::iirFilter<Noddy::Filter::buttap,
+                                   Noddy::Filter::lowpass>(filterOrder, fc,
+                                                           fs))};
+      return Noddy::Filter::linearFilter(filter, getInVal<Signal>("in"));
+    });
   }
 
   void draw() override { ImGui::SetNextItemWidth(100.f); }
@@ -80,18 +80,25 @@ private:
 struct NodeEditor : ImFlow::BaseNode {
   ImFlow::ImNodeFlow mINF;
 
-  NodeEditor(float d, std::size_t r) : BaseNode() {
-    mINF.setSize({d, d});
-    if (r > 0) {
-      auto n1 = mINF.addNode<DataNode>({50, 50});
-      auto nf = mINF.addNode<ButterNode>({550, 100});
-      auto n2 = mINF.addNode<DataNode>({750, 50});
+  NodeEditor() : BaseNode() {
+    mINF.getGrid().config().zoom_enabled = false;
 
-      n1.get()->setData(Eigen::VectorXd::Random(1000));
+    auto n1 = mINF.addNode<DataNode>({50, 50});
+    auto nf = mINF.addNode<FilterNode>({550, 100});
+    auto n2 = mINF.addNode<DataNode>({750, 50});
 
-      n1->outPin("out")->createLink(nf->inPin("in"));
-      nf->outPin("out")->createLink(n2->inPin("in"));
-    }
+    // Sample data
+    Signal y(1000);
+    // Gaussian noise between -1.0 and 1.0
+    std::generate(y.begin(), y.end(), []() {
+      return 2.0 * (static_cast<double>(std::rand()) /
+                    static_cast<double>(RAND_MAX) - 0.5);
+    });
+
+    n1.get()->setData(y);
+
+    n1->outPin("out")->createLink(nf->inPin("in"));
+    nf->outPin("out")->createLink(n2->inPin("in"));
   }
 
   void set_size(ImVec2 d) { mINF.setSize(d); }
@@ -252,25 +259,29 @@ int main(void) {
   ImGui_ImplOpenGL3_Init("#version 330 core");
 
   // Sample data
-  Eigen::VectorXd y{Eigen::VectorXd::Random(1000)};
-  auto            y_     = y.data();
-  int             y_size = y.size();
+  Signal y(1000);
+  // Gaussian noise between -0.5 and 0.5
+  std::generate(y.begin(), y.end(), []() {
+    return 2.0 * (static_cast<double>(std::rand()) /
+                  static_cast<double>(RAND_MAX) -
+                  0.5);
+  });
 
-  int    filterOrder{4};
+  int    filterOrder{2};
   double fs{1000.0};
   double fc{100.0};
 
-  std::vector<Eigen::VectorXd> fData{};
+  std::vector<Signal> yf(4);
   for (int i{0}; i < 4; ++i) {
     Noddy::Filter::ZPK digitalFilter{
         Noddy::Filter::iirFilter<Noddy::Filter::buttap, Noddy::Filter::lowpass>(
             filterOrder, fc - 25 * i, fs)};
-    fData.push_back(
-        Noddy::Filter::linearFilter(Noddy::Filter::zpk2tf(digitalFilter), y));
+    auto filtered{Noddy::Filter::linearFilter(Noddy::Filter::zpk2tf(digitalFilter), y)};
+    yf[i] = filtered;
   }
   //
   // Create a node editor with width and height
-  NodeEditor* nodeEditor     = new (NodeEditor)(1400, 500);
+  NodeEditor* nodeEditor     = new (NodeEditor)();
   const auto  nodeEditorSize = ImVec2(1400, 600);
 
   // Main loop
@@ -298,12 +309,12 @@ int main(void) {
         ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations,
                           ImPlotAxisFlags_NoDecorations |
                               ImPlotAxisFlags_AutoFit);
-        ImPlot::PlotLine("Raw", y_, y_size);
+        ImPlot::PlotLine("Raw", y.data(), y.size());
 
         for (int i{}; i < 4; ++i) {
           std::string fString{"Filtered (fc = " + std::to_string(100 - 25 * i) +
                               " Hz)"};
-          ImPlot::PlotLine(fString.c_str(), fData[i].data(), fData[i].size());
+          ImPlot::PlotLine(fString.c_str(), yf[i].data(), yf[i].size());
         }
         ImPlot::EndPlot();
       }
