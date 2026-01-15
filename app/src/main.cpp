@@ -18,13 +18,13 @@ public:
   DataNode() {
     setTitle("Data");
     setStyle(ImFlow::NodeStyle::green());
-    ImFlow::BaseNode::addIN<Signal>("in", Signal{},
+    ImFlow::BaseNode::addIN<Signal>(">", Signal{},
                                     ImFlow::ConnectionFilter::SameType());
-    ImFlow::BaseNode::addOUT<Signal>("out", nullptr)->behaviour([this]() {
+    ImFlow::BaseNode::addOUT<Signal>("<", nullptr)->behaviour([this]() {
       if (isSource_)
         return data_;
       else
-        return getInVal<Signal>("in");
+        return getInVal<Signal>(">");
     });
   }
 
@@ -36,8 +36,8 @@ public:
       if (isSource_)
         ImPlot::PlotLine("", data_.data(), static_cast<int>(data_.size()));
       else
-        ImPlot::PlotLine("", getInVal<Signal>("in").data(),
-                         static_cast<int>(getInVal<Signal>("in").size()));
+        ImPlot::PlotLine("", getInVal<Signal>(">").data(),
+                         static_cast<int>(getInVal<Signal>(">").size()));
 
       ImPlot::EndPlot();
     }
@@ -56,11 +56,11 @@ private:
 class FilterNode : public ImFlow::BaseNode {
 public:
   FilterNode() {
-    setTitle("Lowpass");
+    setTitle("LPF");
     setStyle(ImFlow::NodeStyle::brown());
-    ImFlow::BaseNode::addIN<Signal>("in", Signal(),
+    ImFlow::BaseNode::addIN<Signal>(">", Signal(),
                                     ImFlow::ConnectionFilter::SameType());
-    ImFlow::BaseNode::addOUT<Signal>("out", nullptr)->behaviour([this]() {
+    ImFlow::BaseNode::addOUT<Signal>("<", nullptr)->behaviour([this]() {
       int    filterOrder{2};
       double fs{1000.0};
 
@@ -68,11 +68,14 @@ public:
           Noddy::Filter::iirFilter<Noddy::Filter::buttap,
                                    Noddy::Filter::lowpass>(filterOrder, m_fc,
                                                            fs))};
-      return Noddy::Filter::linearFilter(filter, getInVal<Signal>("in"));
+      return Noddy::Filter::linearFilter(filter, getInVal<Signal>(">"));
     });
   }
 
-  void draw() override { ImGui::SetNextItemWidth(100.f); }
+  void draw() override {
+    ImGui::SetNextItemWidth(100.f);
+    ImGui::Text("fc (Hz): %0.2f", m_fc);
+  }
 
   void setFrequency(double fc) { m_fc = fc; }
 
@@ -106,10 +109,10 @@ struct NodeEditor : ImFlow::BaseNode {
 
     n1.get()->setData(y);
 
-    n1->outPin("out")->createLink(nf1->inPin("in"));
-    n1->outPin("out")->createLink(nf2->inPin("in"));
-    nf1->outPin("out")->createLink(n2->inPin("in"));
-    nf2->outPin("out")->createLink(n3->inPin("in"));
+    n1->outPin("<")->createLink(nf1->inPin(">"));
+    n1->outPin("<")->createLink(nf2->inPin(">"));
+    nf1->outPin("<")->createLink(n2->inPin(">"));
+    nf2->outPin("<")->createLink(n3->inPin(">"));
   }
 
   void set_size(ImVec2 d) { mINF.setSize(d); }
@@ -154,8 +157,8 @@ int main(void) {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-  float mainScale =
-      ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
+  float mainScale{
+      ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor())};
   GLFWwindow* window{
       glfwCreateWindow(kWinWidth, kWinHeight, "Noddy GUI", nullptr, nullptr)};
   if (!window) {
@@ -321,12 +324,14 @@ int main(void) {
         ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations,
                           ImPlotAxisFlags_NoDecorations |
                               ImPlotAxisFlags_AutoFit);
-        ImPlot::PlotLine("Raw", y.data(), y.size());
+        ImPlot::PlotLine("Raw", y.data(), static_cast<int>(y.size()));
 
         for (int i{}; i < 4; ++i) {
           std::string fString{"Filtered (fc = " + std::to_string(100 - 25 * i) +
                               " Hz)"};
-          ImPlot::PlotLine(fString.c_str(), yf[i].data(), yf[i].size());
+          ImPlot::PlotLine(
+              fString.c_str(), yf[static_cast<std::size_t>(i)].data(),
+              static_cast<int>(yf[static_cast<std::size_t>(i)].size()));
         }
         ImPlot::EndPlot();
       }
