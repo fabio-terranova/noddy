@@ -18,13 +18,13 @@ struct EigenCoeffs {
 
   EigenCoeffs(const Eigen::Ref<const VectorXd>& bCoeffs,
               const Eigen::Ref<const VectorXd>& aCoeffs)
-      : b(bCoeffs), a(aCoeffs) {};
+      : b{bCoeffs}, a{aCoeffs} {};
 
   EigenCoeffs(Coeffs& coeffs)
-      : b(Eigen::Map<VectorXd>(coeffs.b.data(),
-                               static_cast<Index>(coeffs.b.size()))),
-        a(Eigen::Map<VectorXd>(coeffs.a.data(),
-                               static_cast<Index>(coeffs.a.size()))) {}
+      : b{Eigen::Map<VectorXd>{coeffs.b.data(),
+                               static_cast<Index>(coeffs.b.size())}},
+        a{Eigen::Map<VectorXd>{coeffs.a.data(),
+                               static_cast<Index>(coeffs.a.size())}} {}
 };
 
 struct EigenZPK {
@@ -36,14 +36,14 @@ struct EigenZPK {
 
   EigenZPK(const Eigen::Ref<const VectorXcd>& zeros,
            const Eigen::Ref<const VectorXcd>& poles, const double gain)
-      : z(zeros), p(poles), k(gain) {};
+      : z{zeros}, p{poles}, k{gain} {};
 
   EigenZPK(ZPK& zpk)
-      : z(Eigen::Map<VectorXcd>(zpk.z.data(),
-                                static_cast<Index>(zpk.z.size()))),
-        p(Eigen::Map<VectorXcd>(zpk.p.data(),
-                                static_cast<Index>(zpk.p.size()))),
-        k(zpk.k) {}
+      : z{Eigen::Map<VectorXcd>{zpk.z.data(),
+                                static_cast<Index>(zpk.z.size())}},
+        p{Eigen::Map<VectorXcd>{zpk.p.data(),
+                                static_cast<Index>(zpk.p.size())}},
+        k{zpk.k} {}
 };
 
 VectorXd linearFilter(const EigenCoeffs&                filter,
