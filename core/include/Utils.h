@@ -3,16 +3,22 @@
 
 #include <Eigen/Dense>
 #include <chrono>
+#include <complex>
 
 namespace Noddy {
 namespace Utils {
+// Aliases for commonly used Eigen types
 using Eigen::ArrayXi;
 
+// Aliases for commonly used standard types
+using Complex = std::complex<double>;
+using Signal  = std::vector<double>;
+
+// Define a clean format for Eigen output
 inline const Eigen::IOFormat cleanFmt(Eigen::StreamPrecision, 0, " ", ",", "",
                                       "", "[", "]");
 
-Eigen::VectorXd readVectorFromFile(const std::string& filename);
-
+// Simple timer class for performance measurement
 class Timer {
   using Second = std::chrono::duration<double, std::ratio<1>>;
   using Clock  = std::chrono::steady_clock;

@@ -1,11 +1,12 @@
 #define GLFW_INCLUDE_NONE
 #include "Core.h"
-#include "Filter.h"
+#include "FilterEigen.h"
 #include "ImNodeFlow.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
+#include <Eigen/Dense>
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -273,9 +274,9 @@ int main(void) {
   ImGui_ImplOpenGL3_Init("#version 330 core");
 
   // Sample data
-  Signal y(1000);
-  // Gaussian noise between -0.5 and 0.5
-  std::generate(y.begin(), y.end(), []() {
+  Eigen::VectorXd y(1000);
+  // Gaussian noise between -1.0 and 1.0
+  std::generate(y.data(), y.data() + y.size(), []() {
     return 2.0 *
            (static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX) -
             0.5);
@@ -285,16 +286,18 @@ int main(void) {
   double fs{1000.0};
   double fc{100.0}; // starting cutoff freq
 
-  std::vector<Signal> yf(4);
+  std::vector<Eigen::VectorXd> yf(4);
   for (std::size_t i{0}; i < 4; ++i) {
     Noddy::Filter::ZPK digitalFilter{
         Noddy::Filter::iirFilter<Noddy::Filter::buttap, Noddy::Filter::lowpass>(
             filterOrder, fc - 25 * i, fs)};
-    auto filtered{
-        Noddy::Filter::linearFilter(Noddy::Filter::zpk2tf(digitalFilter), y)};
-    yf[i] = filtered;
+
+    Noddy::Filter::EigenCoeffs filter{};
+    filter = Noddy::Filter::zpk2tf(Noddy::Filter::EigenZPK(digitalFilter));
+
+    yf[i] = linearFilter(filter, y);
   }
-  //
+
   // Create a node editor with width and height
   NodeEditor* nodeEditor     = new (NodeEditor)();
   const auto  nodeEditorSize = ImVec2(1400, 600);
@@ -326,12 +329,11 @@ int main(void) {
                               ImPlotAxisFlags_AutoFit);
         ImPlot::PlotLine("Raw", y.data(), static_cast<int>(y.size()));
 
-        for (int i{}; i < 4; ++i) {
+        for (std::size_t i{0}; i < 4; ++i) {
           std::string fString{"Filtered (fc = " + std::to_string(100 - 25 * i) +
                               " Hz)"};
-          ImPlot::PlotLine(
-              fString.c_str(), yf[static_cast<std::size_t>(i)].data(),
-              static_cast<int>(yf[static_cast<std::size_t>(i)].size()));
+          ImPlot::PlotLine(fString.c_str(), yf[i].data(),
+                           static_cast<int>(yf[i].size()));
         }
         ImPlot::EndPlot();
       }
@@ -375,6 +377,7 @@ void processInput(GLFWwindow* window) {
   }
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width,
+                               int height) {
   glViewport(0, 0, width, height);
 }

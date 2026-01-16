@@ -1,19 +1,20 @@
 #ifndef INCLUDE_CORE_FILTER_H_
 #define INCLUDE_CORE_FILTER_H_
 
-#include <complex>
+#include "Utils.h"
 #include <cstddef>
 #include <numbers>
 #include <vector>
 
 namespace Noddy {
 namespace Filter {
+// Using std aliases
 using namespace std::complex_literals;
-
 using std::numbers::pi;
 
-using Complex = std::complex<double>;
-using Signal  = std::vector<double>;
+// Using Utils aliases
+using Noddy::Utils::Complex;
+using Noddy::Utils::Signal;
 
 struct Coeffs {
   std::vector<double> b{};
