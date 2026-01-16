@@ -1,7 +1,6 @@
 #ifndef INCLUDE_CORE_CORE_H_
 #define INCLUDE_CORE_CORE_H_
 
-#include <Eigen/Dense>
 #include <string_view>
 
 namespace Noddy {
