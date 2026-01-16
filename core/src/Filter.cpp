@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include <Eigen/Dense>
 #include <cassert>
+#include <cstddef>
 #include <ostream>
 #include <ranges>
 #include <unsupported/Eigen/FFT>
@@ -391,7 +392,7 @@ Signal fastConvolve(const Signal& f, const Signal& g) {
 }
 
 Signal fftFilter(const Coeffs& filter, const Signal& x, const double epsilon,
-                 const int maxLength) {
+                 const std::size_t maxLength) {
   const auto filterIR{findEffectiveIR(filter, epsilon, maxLength)};
 
   auto y{fastConvolve(filterIR, x)};
