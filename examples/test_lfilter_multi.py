@@ -14,6 +14,7 @@ fc = 1000
 fs = 10000
 btype = "low"
 ftype = "butter"
+spike_frequency = 50  # Hz
 
 
 def spike(samples: int, fs: float, amplitude: float = 1.0) -> np.ndarray:
@@ -41,7 +42,7 @@ b, a = signal.iirfilter(order, fc, fs=fs, btype=btype, ftype=ftype, rs=5.0, rp=5
 np.random.seed(42)
 t = np.arange(n_samples) / fs
 data = np.random.randn(n_channels, n_samples)
-n_spikes = 30
+n_spikes = int(spike_frequency * (n_samples / fs))
 spike_times = np.random.choice(n_samples - 20, n_spikes, replace=False) + 10
 for ch in range(n_channels):
     delay = np.random.randint(-10, 11)  # delay between -10 and 10 samples
