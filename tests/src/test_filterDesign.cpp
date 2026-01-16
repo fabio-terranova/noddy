@@ -1,59 +1,113 @@
 #include "Filter.h"
-#include "Utils.h"
+#include <cassert>
 #include <iostream>
 
-using Noddy::Filter::Complex;
-using Noddy::Filter::ZPK;
-using Noddy::Utils::Timer;
+using namespace Noddy::Filter;
 
-bool test_filterDesign() {
-  using namespace Noddy::Filter;
+bool isAlmostEqual(const Complex& a, const Complex& b,
+                   const double tol = 1e-6) {
+  return std::abs(a - b) < tol;
+}
 
-  const auto order{3};
-  const auto fc{100.0};
-  const auto fs{1000.0};
-  const auto ftype{lowpass};
+bool operator==(const ZPK& first, const ZPK& second) {
+  if (first.z.size() != second.z.size())
+    return false;
+  if (first.p.size() != second.p.size())
+    return false;
 
-  Timer timer{};
-  { // Butterworth
-    timer.reset();
-    ZPK  digitalFilter{iirFilter<buttap, ftype>(order, fc, fs)};
-    auto elapsed{timer.elapsed()};
+  if (!isAlmostEqual(first.k, second.k))
+    return false;
 
-    std::cout << "--- Design Butterworth filter ---" << '\n';
-    std::cout << "Time taken: " << elapsed << '\n';
-    std::cout << digitalFilter << '\n';
+  for (std::size_t i{0}; i < first.z.size(); ++i) {
+    if (!isAlmostEqual(first.z[i], second.z[i]))
+      return false;
   }
 
-  { // Chebyshev I
-    const auto rp{5.0};
-
-    timer.reset();
-    ZPK  digitalFilter{iirFilter<cheb1ap, ftype>(order, fc, fs, rp)};
-    auto elapsed{timer.elapsed()};
-
-    std::cout << "--- Design Chebyshev I filter ---" << '\n';
-    std::cout << "Time taken: " << elapsed << '\n';
-    std::cout << digitalFilter << '\n';
-  }
-
-  { // Chebyshev II
-    const auto rs{4.0};
-
-    timer.reset();
-    ZPK  digitalFilter{iirFilter<cheb2ap, ftype>(order, fc, fs, rs)};
-    auto elapsed{timer.elapsed()};
-
-    std::cout << "--- Design Chebyshev II filter ---" << '\n';
-    std::cout << "Time taken: " << elapsed << '\n';
-    std::cout << digitalFilter << '\n';
+  for (std::size_t i{0}; i < first.p.size(); ++i) {
+    if (!isAlmostEqual(first.p[i], second.p[i]))
+      return false;
   }
 
   return true;
 }
 
+template <Noddy::Filter::Type ftype>
+bool testButterworth(const int order, const double fc, const double fs,
+                     const ZPK& expected) {
+  std::cout << "--- Testing Butterworth filter design ---\n";
+
+  ZPK digitalFilter{iirFilter<buttap, ftype>(order, fc, fs)};
+
+  std::cout << digitalFilter << '\n';
+
+  return digitalFilter == expected;
+}
+
+template <Noddy::Filter::Type ftype>
+bool testChebyshevI(const int order, const double fc, const double fs,
+                     const double rp, const ZPK& expected) {
+  std::cout << "--- Testing Chebyshev I filter design ---\n";
+
+  ZPK digitalFilter{iirFilter<cheb1ap, ftype>(order, fc, fs, rp)};
+
+  std::cout << digitalFilter << '\n';
+
+  return digitalFilter == expected;
+}
+
+template <Noddy::Filter::Type ftype>
+bool testChebyshevII(const int order, const double fc, const double fs,                        
+                      const double rs, const ZPK& expected) {
+  std::cout << "--- Testing Chebyshev II filter design ---\n";
+
+  ZPK digitalFilter{iirFilter<cheb2ap, ftype>(order, fc, fs, rs)};
+  std::cout << digitalFilter << '\n';
+
+  return digitalFilter == expected;
+}
+
 int main() {
-  test_filterDesign();
+  using namespace Noddy::Filter;
+
+  const auto order{2};
+  const auto ftype{lowpass};
+  const auto fc{100.0};
+  const auto fs{1000.0};
+  const auto rp{5.0};
+  const auto rs{5.0};
+
+  auto expectedButterworth{
+      ZPK{{-1.0 + 0.0i, -1.0 + 0.0i},
+          {0.57149025 + 0.2935992i, 0.57149025 - 0.2935992i},
+          0.0674552738890719}
+  };
+
+  auto expectedChebyshevI{
+      ZPK{{-1.0 + 0.0i, -1.0 + 0.0i},
+          {0.77209728 + 0.39831468i, 0.77209728 - 0.39831468i},
+          0.02960646023643654}
+  };
+
+  auto expectedChebyshevII{
+      ZPK{{0.6513291 - 0.75879537j, 0.6513291 + 0.75879537j},
+          {0.61151327 - 0.42266258j, 0.61151327 + 0.42266258j},
+          0.47260267144001655}
+  };
+
+  if (!testButterworth<ftype>(order, fc, fs, expectedButterworth)) {
+    std::cerr << "Butterworth filter test failed.\n";
+    return 1;
+  }
+
+  if (!testChebyshevI<ftype>(order, fc, fs, rp, expectedChebyshevI)) {
+    std::cerr << "Chebyschev I filter test failed.\n";
+    return 1;
+  }
+
+  if (!testChebyshevII<ftype>(order, fc, fs, rs, expectedChebyshevII)) {
+    std::cerr << "Chebyschev II filter test failed.\n";
+    return 1;
+  }
 
   return 0;
 }
