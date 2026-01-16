@@ -49,14 +49,14 @@ struct EigenZPK {
         k{zpk.k} {}
 };
 
-RowMajorMatrixXd linearFilter(const EigenCoeffs&                      filter,
-                            const Eigen::Ref<const RowMajorMatrixXd>& x,
-                            Eigen::Ref<RowMajorMatrixXd>              state);
-VectorXd linearFilter(const EigenCoeffs&                filter,
-                      const Eigen::Ref<const VectorXd>& x,
-                      Eigen::Ref<VectorXd>              state);
-VectorXd linearFilter(const EigenCoeffs&                filter,
-                      const Eigen::Ref<const VectorXd>& x);
+RowMajorMatrixXd linearFilter(const EigenCoeffs&&                       filter,
+                              const Eigen::Ref<const RowMajorMatrixXd>& x,
+                              Eigen::Ref<RowMajorMatrixXd>              state);
+VectorXd         linearFilter(const EigenCoeffs&                filter,
+                              const Eigen::Ref<const VectorXd>& x,
+                              Eigen::Ref<VectorXd>              state);
+VectorXd         linearFilter(const EigenCoeffs&                filter,
+                              const Eigen::Ref<const VectorXd>& x);
 
 VectorXd fftFilter(const EigenCoeffs&                filter,
                    const Eigen::Ref<const VectorXd>& x, const double epsilon,

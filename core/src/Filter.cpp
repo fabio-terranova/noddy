@@ -296,7 +296,7 @@ Coeffs zpk2tf(const ZPK& zpk) {
   return tf;
 }
 
-RowMajorMatrixXd linearFilter(const EigenCoeffs&                        filter,
+RowMajorMatrixXd linearFilter(const EigenCoeffs&&                       filter,
                               const Eigen::Ref<const RowMajorMatrixXd>& x,
                               Eigen::Ref<RowMajorMatrixXd>              state) {
   const Index nRows{static_cast<Index>(x.rows())};
