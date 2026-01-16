@@ -45,8 +45,8 @@ py::array_t<double> lfilter_multi(
     py::array_t<double, py::array::c_style | py::array::forcecast> x) {
   using namespace Noddy::Filter;
 
-  const Index n_channels = static_cast<Index>(x.shape(0));
-  const Index n_samples  = static_cast<Index>(x.shape(1));
+  const auto n_channels{static_cast<Index>(x.shape(0))};
+  const auto n_samples{static_cast<Index>(x.shape(1))};
 
   Eigen::Map<const VectorXd>         b_map(b.data(), b.size());
   Eigen::Map<const VectorXd>         a_map(a.data(), a.size());
@@ -58,8 +58,8 @@ py::array_t<double> lfilter_multi(
   Eigen::Map<RowMajorMatrixXd> y_map(y_out.mutable_data(), n_channels,
                                      n_samples);
 
-  RowMajorMatrixXd state = RowMajorMatrixXd::Zero(
-      n_channels, std::max(b_map.size(), a_map.size()) - 1);
+  RowMajorMatrixXd state{RowMajorMatrixXd::Zero(
+      n_channels, std::max(b_map.size(), a_map.size()) - 1)};
 
   y_map = linearFilter({b_map, a_map}, x_map, state);
 
