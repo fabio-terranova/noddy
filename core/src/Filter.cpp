@@ -296,13 +296,27 @@ Coeffs zpk2tf(const ZPK& zpk) {
   return tf;
 }
 
+RowMajorMatrixXd linearFilter(const EigenCoeffs&                      filter,
+                            const Eigen::Ref<const RowMajorMatrixXd>& x,
+                            Eigen::Ref<RowMajorMatrixXd>              state) {
+  const Index    nRows{static_cast<Index>(x.rows())};
+
+  RowMajorMatrixXd y(nRows, x.cols());
+  for (Index r{0}; r < nRows; ++r) {
+    y.row(r) = linearFilter(filter, Eigen::Ref<const VectorXd>{x.row(r)},
+                            Eigen::Ref<VectorXd>{state.row(r)});
+  }
+
+  return y;  
+}
+
 VectorXd linearFilter(const EigenCoeffs&                filter,
                       const Eigen::Ref<const VectorXd>& x,
                       Eigen::Ref<VectorXd>              state) {
-  const auto nB{filter.b.size()};
-  const auto nA{filter.a.size()};
-  const auto nX{x.size()};
-  const auto nS{std::max(nB, nA) - 1};
+  const Index nB{filter.b.size()};
+  const Index nA{filter.a.size()};
+  const Index nX{x.size()};
+  const Index nS{std::max(nB, nA) - 1};
 
   if (state.size() < nS) {
     VectorXd newState = VectorXd::Zero(nS);
@@ -348,8 +362,10 @@ Signal linearFilter(const Coeffs& filter, const Signal& x, Signal& si) {
       EigenMap<const VectorXd>(filter.a.data(),
                                static_cast<Index>(filter.a.size()))};
 
-  const VectorXd yMap{linearFilter(eigenFilter, xMap, siMap)};
-  Signal         y(static_cast<std::size_t>(yMap.size()));
+  Eigen::Ref<const VectorXd> xVec{xMap};
+  Eigen::Ref<VectorXd>       siVec{siMap};
+  const VectorXd             yMap{linearFilter(eigenFilter, xVec, siVec)};
+  Signal                     y(static_cast<std::size_t>(yMap.size()));
   EigenMap<VectorXd>(y.data(), static_cast<Index>(y.size())) = yMap;
 
   return y;
@@ -369,7 +385,9 @@ VectorXd findEffectiveIR(const EigenCoeffs& filter, const double epsilon,
 
   VectorXd impulse{VectorXd::Zero(maxLength)};
   impulse(0) = 1.0;
-  VectorXd ir{linearFilter(filter, impulse, si)};
+  Eigen::Ref<const VectorXd> impulseRef{impulse};
+  Eigen::Ref<VectorXd>       siRef{si};
+  VectorXd                   ir{linearFilter(filter, impulseRef, siRef)};
 
   // find effective length
   Index irLength{ir.size()};

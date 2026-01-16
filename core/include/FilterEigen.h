@@ -10,6 +10,9 @@ using Eigen::Index;
 using Eigen::VectorXcd;
 using Eigen::VectorXd;
 
+using RowMajorMatrixXd =
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
 struct EigenCoeffs {
   VectorXd b{};
   VectorXd a{};
@@ -46,6 +49,9 @@ struct EigenZPK {
         k{zpk.k} {}
 };
 
+RowMajorMatrixXd linearFilter(const EigenCoeffs&                      filter,
+                            const Eigen::Ref<const RowMajorMatrixXd>& x,
+                            Eigen::Ref<RowMajorMatrixXd>              state);
 VectorXd linearFilter(const EigenCoeffs&                filter,
                       const Eigen::Ref<const VectorXd>& x,
                       Eigen::Ref<VectorXd>              state);
