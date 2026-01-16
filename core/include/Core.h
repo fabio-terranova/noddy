@@ -6,7 +6,7 @@
 
 namespace Noddy {
 namespace Core {
-inline std::string_view version() { return "0.1.0"; };
+inline constexpr std::string_view version() { return "0.1.0"; };
 } // namespace Core
 } // namespace Noddy
 
