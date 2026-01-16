@@ -1,21 +1,29 @@
 import time
+from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
-import numpy as np
 import noddy_py
+import numpy as np
 from scipy import signal
 
 plot = True
 n_samples = 100000
-order = 2
+order = 5
 fc = 400
 fs = 10000
-epsilon = 1e-9
+epsilon = 1e-6
 ftype = "butter"
 # ftype = "cheby1"
 # ftype = "cheby2"
 btype = "low"
 # btype = "high"
+
+@contextmanager
+def timed(label: str):
+    t0 = time.time()
+    yield
+    dt = time.time() - t0
+    print(f"{label}:\t {dt} s")
 
 b, a = signal.iirfilter(order, fc, fs=fs, btype=btype, ftype=ftype, rs=5.0, rp=5.0)
 
@@ -23,20 +31,14 @@ b, a = signal.iirfilter(order, fc, fs=fs, btype=btype, ftype=ftype, rs=5.0, rp=5
 data = np.random.standard_normal(n_samples)
 x = np.linspace(0, n_samples / fs, n_samples)
 
-time_start = time.time()
-output = signal.lfilter(b, a, data)
-time_end = time.time()
-print(f"Time taken (py):\t {time_end - time_start} s")
+with timed("Time taken (py)"):
+    output = signal.lfilter(b, a, data)
 
-time_start = time.time()
-outputcpp = np.array(noddy_py.lfilter(b=b, a=a, x=data))
-time_end = time.time()
-print(f"Time taken (cpp):\t {time_end - time_start} s")
+with timed("Time taken (cpp)"):
+    outputcpp = np.array(noddy_py.lfilter(b=b, a=a, x=data))
 
-time_start = time.time()
-outputcpp_fft = np.array(noddy_py.fft_filter(b=b, a=a, x=data, epsilon=epsilon))
-time_end = time.time()
-print(f"Time taken (cpp, fft):\t {time_end - time_start} s")
+with timed("Time taken (cpp, fft)"):
+    outputcpp_fft = np.array(noddy_py.fft_filter(b=b, a=a, x=data, epsilon=epsilon))
 
 # fft
 fft_data = np.fft.rfft(data)
