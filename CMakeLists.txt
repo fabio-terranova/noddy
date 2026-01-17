@@ -5,6 +5,7 @@ project(noddy LANGUAGES CXX C)
 include(CTest)
 
 find_package(OpenGL REQUIRED)
+find_package(OpenMP REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

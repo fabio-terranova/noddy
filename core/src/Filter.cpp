@@ -9,6 +9,10 @@
 #include <unsupported/Eigen/FFT>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace Noddy {
 namespace Filter {
 using Eigen::ArrayXcd;
@@ -302,7 +306,10 @@ RowMajorMatrixXd linearFilter(const EigenCoeffs&&                       filter,
   const Index nRows{static_cast<Index>(x.rows())};
 
   RowMajorMatrixXd y(nRows, x.cols());
-  for (Index r{0}; r < nRows; ++r) {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (Index r = 0; r < nRows; ++r) {
     y.row(r) = linearFilter(filter, Eigen::Ref<const VectorXd>{x.row(r)},
                             Eigen::Ref<VectorXd>{state.row(r)});
   }

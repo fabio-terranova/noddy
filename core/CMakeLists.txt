@@ -9,6 +9,7 @@ target_include_directories(noddy_core PUBLIC include)
 
 target_link_libraries(noddy_core PUBLIC
     eigen
+    OpenMP::OpenMP_CXX
 )
 
 # Enable import library generation on Windows

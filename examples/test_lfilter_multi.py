@@ -7,7 +7,7 @@ import numpy as np
 from scipy import signal
 
 plot = True
-n_samples = 60000
+n_samples = 600000
 n_channels = 64
 order = 5
 fc = 1000
@@ -17,13 +17,10 @@ ftype = "butter"
 spike_frequency = 50  # Hz
 
 
-def spike(samples: int, fs: float, amplitude: float = 1.0) -> np.ndarray:
-    # the spike lasts about 1 ms
-    t = np.arange(-samples // 2, samples // 2) / fs
-    spike_waveform = (
-        amplitude * (1 - (t * fs / 10) ** 2) * np.exp(-((t * fs / 10) ** 2))
-    )
-    return spike_waveform
+def spike(length: int, fs: int, amplitude: float = 1.0) -> np.ndarray:
+    t = np.arange(length) / fs
+    waveform = amplitude * np.exp(-((t - (length / (2 * fs))) ** 2) / (2 * (0.001**2)))
+    return waveform
 
 
 @contextmanager
@@ -59,15 +56,11 @@ with timed("Time taken (cpp, multi)"):
     output_cpp_multi = np.array(noddy_py.lfilter_multi(b=b, a=a, x=data))
 
 if plot:
-    # downsample for plotting
-    ds_factor = 10
-    t = t[::ds_factor]
-    data = data[:, ::ds_factor]
-    output_py = output_py[:, ::ds_factor]
-    output_cpp_multi = output_cpp_multi[:, ::ds_factor]
     # square grid of subplots
     n = int(np.ceil(np.sqrt(n_channels)))
     fig, axes = plt.subplots(n, n, figsize=(12, 8), sharex=True, sharey=True)
+    # wspace and hspace to 0.1
+    fig.subplots_adjust(wspace=0.1, hspace=0.1)
     axes = axes.flatten()
     for ch in range(n_channels):
         axes[ch].plot(t, data[ch, :], label="input", alpha=0.3)
@@ -76,5 +69,4 @@ if plot:
             t, output_cpp_multi[ch, :], label="noddy multi", linestyle="--", alpha=0.7
         )
     axes[0].legend()
-    plt.tight_layout()
     plt.show()

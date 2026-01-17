@@ -1,4 +1,3 @@
-#include "Filter.h"
 #include "FilterEigen.h"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -51,9 +50,8 @@ py::array_t<double> lfilter_multi(
   Eigen::Map<const VectorXd>         a_map(a.data(), a.size());
   Eigen::Map<const RowMajorMatrixXd> x_map(x.data(), n_channels, n_samples);
 
-  py::array_t<double> y_out({static_cast<py::ssize_t>(n_channels),
-                             static_cast<py::ssize_t>(n_samples)});
-
+  py::array_t<double>          y_out({static_cast<py::ssize_t>(n_channels),
+                                      static_cast<py::ssize_t>(n_samples)});
   Eigen::Map<RowMajorMatrixXd> y_map(y_out.mutable_data(), n_channels,
                                      n_samples);
 
