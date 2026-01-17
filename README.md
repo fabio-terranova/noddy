@@ -42,7 +42,7 @@ Example python scripts are located in the `examples/` directory. To run an examp
 python examples/example_script.py
 ```
 
-Ensure you have the necessary Python dependencies installed and the `noddy_py` module is accessible in your `PYTHONPATH.`
+Ensure you have the necessary Python dependencies installed and the `noddy_py` module is accessible in your `PYTHONPATH`.
 
 ## License
 
