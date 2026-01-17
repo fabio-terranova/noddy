@@ -89,8 +89,8 @@ int main() {
   };
 
   auto expectedChebyshevII{
-      ZPK{{0.6513291 - 0.75879537j, 0.6513291 + 0.75879537j},
-          {0.61151327 - 0.42266258j, 0.61151327 + 0.42266258j},
+      ZPK{{0.6513291 - 0.75879537i, 0.6513291 + 0.75879537i},
+          {0.61151327 - 0.42266258i, 0.61151327 + 0.42266258i},
           0.47260267144001655}
   };
 
@@ -100,12 +100,12 @@ int main() {
   }
 
   if (!testChebyshevI<ftype>(order, fc, fs, rp, expectedChebyshevI)) {
-    std::cerr << "Chebyschev I filter test failed.\n";
+    std::cerr << "Chebyshev I filter test failed.\n";
     return 1;
   }
 
   if (!testChebyshevII<ftype>(order, fc, fs, rs, expectedChebyshevII)) {
-    std::cerr << "Chebyschev II filter test failed.\n";
+    std::cerr << "Chebyshev II filter test failed.\n";
     return 1;
   }
 
