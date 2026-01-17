@@ -11,7 +11,7 @@ lfilter_multi(py::array_t<double, py::array::c_style | py::array::forcecast> b,
               py::array_t<double, py::array::c_style | py::array::forcecast> a,
               py::array_t<double, py::array::c_style | py::array::forcecast> x);
 
-PYBIND11_MODULE(nodex_py, m, py::mod_gil_not_used()) {
+PYBIND11_MODULE(pynodex, m, py::mod_gil_not_used()) {
   using Nodex::Filter::Signal;
 
   m.doc() = "Python bindings for Nodex filter operations.";
