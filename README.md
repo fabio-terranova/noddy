@@ -34,6 +34,16 @@ Run the application from the build directory:
 ./bin/noddy_gui
 ```
 
+## Examples
+
+Example python scripts are located in the `examples/` directory. To run an example:
+
+```bashpython
+python examples/example_script.py
+```
+
+Ensure you have the necessary Python dependencies installed and the `noddy_py` module is accessible in your `PYTHONPATH.`
+
 ## License
 
 See [LICENSE](LICENSE) for details.
