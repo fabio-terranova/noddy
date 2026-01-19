@@ -1,3 +1,4 @@
+#include "Filter.h"
 #define GLFW_INCLUDE_NONE
 #include "Core.h"
 #include "FilterEigen.h"
@@ -68,31 +69,64 @@ private:
 class FilterNode : public ImFlow::BaseNode {
 public:
   FilterNode() {
-    setTitle("LPF");
+    setTitle("Filter");
     setStyle(ImFlow::NodeStyle::brown());
     ImFlow::BaseNode::addIN<Signal>(">", Signal(),
                                     ImFlow::ConnectionFilter::SameType());
     ImFlow::BaseNode::addOUT<Signal>(">", nullptr)->behaviour([this]() {
-      int    filterOrder{2};
-      double fs{1000.0};
-
-      auto filter{Nodex::Filter::zpk2tf(
-          Nodex::Filter::iirFilter<Nodex::Filter::buttap,
-                                   Nodex::Filter::lowpass>(filterOrder, m_fc,
-                                                           fs))};
+      double fs = 1000.0;
+      auto zpk{Nodex::Filter::iirFilter(m_order, m_fc, fs, m_filterType, m_filterMode, m_ripple)};
+      auto filter = Nodex::Filter::zpk2tf(zpk);
       return Nodex::Filter::linearFilter(filter, getInVal<Signal>(">"));
     });
   }
 
   void draw() override {
-    ImGui::SetNextItemWidth(100.f);
-    ImGui::Text("fc (Hz): %0.2f", m_fc);
+    ImGui::SetNextItemWidth(100.0f);
+    // Filter type dropdown
+    static const char* filterTypes[] = {"Butterworth", "Cheby1", "Cheby2"};
+    int filterTypeIdx = static_cast<int>(m_filterType);
+    if (ImGui::Combo("Type", &filterTypeIdx, filterTypes, 3)) {
+      m_filterType = static_cast<Nodex::Filter::Type>(filterTypeIdx);
+    }
+
+    ImGui::SetNextItemWidth(100.0f);
+    // Filter mode dropdown
+    static const char* filterModes[] = {"Lowpass", "Highpass"};
+    int filterModeIdx = static_cast<int>(m_filterMode);
+    if (ImGui::Combo("Mode", &filterModeIdx, filterModes, 2)) {
+      m_filterMode = static_cast<Nodex::Filter::Mode>(filterModeIdx);
+    }
+
+    ImGui::SetNextItemWidth(100.0f);
+    // Filter order slider
+    ImGui::SliderInt("Order", &m_order, 1, 8);
+
+    ImGui::SetNextItemWidth(100.0f);
+    // Cutoff frequency slider
+    ImGui::SliderFloat("fc (Hz)", &m_fc, 1.0f, 500.0f, "%.2f");
+
+    // Ripple controls for Chebyshev filters
+    if (m_filterType == Nodex::Filter::cheb1) {
+      ImGui::SetNextItemWidth(100.0f);
+      ImGui::SliderFloat("Passband ripple (dB)", &m_ripple, 0.1f, 10.0f, "%.2f");
+    } else if (m_filterType == Nodex::Filter::cheb2) {
+      ImGui::SetNextItemWidth(100.0f);
+      ImGui::SliderFloat("Stopband ripple (dB)", &m_ripple, 0.1f, 80.0f, "%.2f");
+    }
   }
 
-  void setFrequency(double fc) { m_fc = fc; }
+  void setFrequency(float fc) { m_fc = fc; }
+  void setOrder(int order) { m_order = order; }
+  void setType(Nodex::Filter::Type type) { m_filterType = type; }
+  void setMode(Nodex::Filter::Mode mode) { m_filterMode = mode; }
 
 private:
-  double m_fc{100};
+  int m_order{2};
+  float m_fc{100.0f};
+  float m_ripple{5.0f}; // Used for Chebyshev filters
+  Nodex::Filter::Type m_filterType{Nodex::Filter::butter};
+  Nodex::Filter::Mode m_filterMode{Nodex::Filter::lowpass};
 };
 
 /* Node editor that sets up the grid to place nodes */
@@ -104,7 +138,7 @@ struct NodeEditor : ImFlow::BaseNode {
 
     auto n1  = mINF.addNode<DataNode>({50, 50});
     auto nf1 = mINF.addNode<FilterNode>({550, 100});
-    nf1->setFrequency(50.0);
+    nf1->setFrequency(50.0f);
     auto nf2 = mINF.addNode<FilterNode>({550, 200});
     nf2->setFrequency(150.0);
     auto n2 = mINF.addNode<DataViewerNode>({750, 50});
@@ -277,8 +311,8 @@ int main(void) {
 
   // Setup scaling
   ImGuiStyle& style{ImGui::GetStyle()};
-  style.ScaleAllSizes(mainScale);
-  style.FontScaleDpi     = mainScale;
+  // style.ScaleAllSizes(mainScale);
+  // style.FontScaleDpi     = mainScale;
   style.AntiAliasedLines = true;
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);

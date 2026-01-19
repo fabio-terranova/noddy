@@ -31,36 +31,36 @@ bool operator==(const ZPK& first, const ZPK& second) {
   return true;
 }
 
-template <Nodex::Filter::Type ftype>
+template <Nodex::Filter::Mode fmode>
 bool testButterworth(const int order, const double fc, const double fs,
                      const ZPK& expected) {
   std::cout << "--- Testing Butterworth filter design ---\n";
 
-  ZPK digitalFilter{iirFilter<buttap, ftype>(order, fc, fs)};
+  ZPK digitalFilter{iirFilter(order, fc, fs, butter, fmode)};
 
   std::cout << digitalFilter << '\n';
 
   return digitalFilter == expected;
 }
 
-template <Nodex::Filter::Type ftype>
+template <Nodex::Filter::Mode fmode>
 bool testChebyshevI(const int order, const double fc, const double fs,
-                     const double rp, const ZPK& expected) {
+                    const double rp, const ZPK& expected) {
   std::cout << "--- Testing Chebyshev I filter design ---\n";
 
-  ZPK digitalFilter{iirFilter<cheb1ap, ftype>(order, fc, fs, rp)};
+  ZPK digitalFilter{iirFilter(order, fc, fs, cheb1, fmode, rp)};
 
   std::cout << digitalFilter << '\n';
 
   return digitalFilter == expected;
 }
 
-template <Nodex::Filter::Type ftype>
-bool testChebyshevII(const int order, const double fc, const double fs,                        
-                      const double rs, const ZPK& expected) {
+template <Nodex::Filter::Mode fmode>
+bool testChebyshevII(const int order, const double fc, const double fs,
+                     const double rs, const ZPK& expected) {
   std::cout << "--- Testing Chebyshev II filter design ---\n";
 
-  ZPK digitalFilter{iirFilter<cheb2ap, ftype>(order, fc, fs, rs)};
+  ZPK digitalFilter{iirFilter(order, fc, fs, cheb2, fmode, rs)};
   std::cout << digitalFilter << '\n';
 
   return digitalFilter == expected;
@@ -70,7 +70,7 @@ int main() {
   using namespace Nodex::Filter;
 
   const auto order{2};
-  const auto ftype{lowpass};
+  const auto fnode{lowpass};
   const auto fc{100.0};
   const auto fs{1000.0};
   const auto rp{5.0};
@@ -94,17 +94,17 @@ int main() {
           0.47260267144001655}
   };
 
-  if (!testButterworth<ftype>(order, fc, fs, expectedButterworth)) {
+  if (!testButterworth<fnode>(order, fc, fs, expectedButterworth)) {
     std::cerr << "Butterworth filter test failed.\n";
     return 1;
   }
 
-  if (!testChebyshevI<ftype>(order, fc, fs, rp, expectedChebyshevI)) {
+  if (!testChebyshevI<fnode>(order, fc, fs, rp, expectedChebyshevI)) {
     std::cerr << "Chebyshev I filter test failed.\n";
     return 1;
   }
 
-  if (!testChebyshevII<ftype>(order, fc, fs, rs, expectedChebyshevII)) {
+  if (!testChebyshevII<fnode>(order, fc, fs, rs, expectedChebyshevII)) {
     std::cerr << "Chebyshev II filter test failed.\n";
     return 1;
   }

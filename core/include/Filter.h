@@ -52,36 +52,64 @@ Signal fftFilter(const Coeffs& filter, const Signal& x,
 // Zeros-poles-gain to transfer function coefficients conversion
 Coeffs zpk2tf(const ZPK& zpk);
 
-// Standard filter types
-enum Type {
+// Standard filter modes and types
+enum Mode {
   lowpass,
   highpass,
   bandpass, // TODO: implement
   bandstop, // TODO: implement
-  maxFilters,
+  maxMode,
+};
+
+enum Type {
+  butter,
+  cheb1,
+  cheb2,
+  maxType,
 };
 
 // Transformations
-ZPK analog2digital(ZPK analog, double fc, double fs, Type type);
+ZPK analog2digital(ZPK analog, double fc, double fs, Mode mode);
 ZPK bilinearTransform(const ZPK& analog, const double fs);
 ZPK lp2lp(const ZPK& input, const double wc);
 ZPK lp2hp(const ZPK& input, const double wc);
 
 // IIR filter design functions
-template <ZPK (*F)(const int), Type type>
+template <ZPK (*F)(const int), Mode mode>
 ZPK iirFilter(const int n, double fc, double fs) {
-  return analog2digital(F(n), fc, fs, type);
+  return analog2digital(F(n), fc, fs, mode);
 }
 
-template <ZPK (*F)(const int, const double), Type type>
+template <ZPK (*F)(const int, const double), Mode mode>
 ZPK iirFilter(const int n, double fc, double fs, const double param) {
-  return analog2digital(F(n, param), fc, fs, type);
+  return analog2digital(F(n, param), fc, fs, mode);
 }
 
 // Analog prototype filters
 ZPK buttap(const int n);
 ZPK cheb1ap(const int n, const double rp);
 ZPK cheb2ap(const int n, const double rs);
+
+inline ZPK iirFilter(const int n, double fc, double fs,
+                     const Type type = butter, const Mode mode = lowpass,
+                     const double param = 5.0) {
+  ZPK analogFilter{};
+  switch (type) {
+  case butter:
+    analogFilter = buttap(n);
+    break;
+  case cheb1:
+    analogFilter = cheb1ap(n, param);
+    break;
+  case cheb2:
+    analogFilter = cheb2ap(n, param);
+    break;
+  default:
+    break;
+  }
+
+  return analog2digital(analogFilter, fc, fs, mode);
+}
 } // namespace Filter
 } // namespace Nodex
 

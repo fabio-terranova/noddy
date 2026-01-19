@@ -64,20 +64,18 @@ std::ostream& operator<<(std::ostream& os, const ZPK& zpk) {
   return os;
 }
 
-ZPK analog2digital(ZPK analog, double fc, double fs,
-                   Type type = Type::lowpass) {
-  assert(type == Type::lowpass or
-         type == Type::highpass and
-             "iirFilter(): only lowPass and highPass are "
-             "implemented for single cutoff frequency");
+ZPK analog2digital(ZPK analog, double fc, double fs, Mode mode = lowpass) {
+  assert(mode == lowpass or mode == highpass and
+                                "iirFilter(): only lowPass and highPass are "
+                                "implemented for single cutoff frequency");
 
   fc /= (fs / 2);
   fs = 2.0;
   const double warped{2.0 * fs * std::tan(std::numbers::pi * fc / fs)};
 
-  if (type == Type::lowpass)
+  if (mode == lowpass)
     analog = lp2lp(analog, warped);
-  else if (type == Type::highpass) {
+  else if (mode == highpass) {
     analog = lp2hp(analog, warped);
   }
 
