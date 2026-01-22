@@ -304,7 +304,7 @@ int main(void) {
   // Make sinusoidal data frequency of 5 Hz
   // Amplitude of 1.0, sampled at 1000 Hz for 1 second
   Eigen::ArrayXd sinData = Eigen::sin(Eigen::ArrayXd::LinSpaced(
-      1000, 0.0, 2.0 * M_PI * 5.0 * (999.0 / 1000.0)));
+      1000, 0.0, 2.0 * std::numbers::pi * 5.0 * (999.0 / 1000.0)));
 
   NodeGraph graph;
   auto      dataNode{graph.createNode<DataNode>("Data 1", randomData)};
