@@ -58,7 +58,7 @@ public:
 private:
   Function<T()> m_cb;
   T             m_value{};
-  std::size_t   m_lastEvalFrame{0};
+  std::size_t   m_lastEvalFrame{};
 };
 
 template <typename T>
