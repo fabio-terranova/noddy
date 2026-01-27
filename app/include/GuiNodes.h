@@ -11,6 +11,25 @@ namespace Nodex::App {
 using namespace Nodex::Filter;
 using namespace Nodex::Core;
 
+// Default parameters (general)
+constexpr double kDefaultSamplingFreq = 1000.0;
+constexpr int    kDefaultSamples      = 1000;
+
+// Default parameters (MixerNode)
+constexpr double kDefaultGain = 1.0;
+
+// Default parameters (SineNode)
+constexpr double kDefaultOffset    = 0.0;
+constexpr double kDefaultAmplitude = 1.0;
+constexpr double kDefaultFrequency = 50.0;
+constexpr double kDefaultPhase     = 0.0;
+
+// Default parameters (FilterNode)
+constexpr Filter::Mode kDefaultFilterMode  = Filter::Mode::lowpass;
+constexpr Filter::Type kDefaultFilterType  = Filter::Type::butter;
+constexpr int          kDefaultFilterOrder = 2;
+constexpr double       kDefaultCutoffFreq  = 100.0;
+
 struct DragDropState {
   Port*  draggedPort{nullptr};
   ImVec2 dragStartPos{
@@ -29,8 +48,8 @@ public:
   void           render() override;
 
 private:
-  double m_gain1{1.0};
-  double m_gain2{1.0};
+  double m_gain1{kDefaultGain};
+  double m_gain2{kDefaultGain};
 };
 
 class ViewerNode : public Node {
@@ -42,12 +61,12 @@ public:
 
 class RandomDataNode : public Node {
 public:
-  RandomDataNode(std::string_view name, int size);
+  RandomDataNode(std::string_view name, int size = kDefaultSamples);
 
   void render() override;
 
 private:
-  int            m_samples{1000};
+  int            m_samples{};
   Eigen::ArrayXd m_data{};
 };
 
@@ -60,12 +79,12 @@ public:
 private:
   Eigen::ArrayXd generateWave();
 
-  int    m_samples{1000};
-  double m_frequency{1.0};
-  double m_amplitude{1.0};
-  double m_phase{0.0};
-  double m_samplingFreq{100.0};
-  double m_bias{0.0};
+  int    m_samples{kDefaultSamples};
+  double m_frequency{kDefaultFrequency};
+  double m_amplitude{kDefaultAmplitude};
+  double m_phase{kDefaultPhase};
+  double m_samplingFreq{kDefaultSamplingFreq};
+  double m_offset{kDefaultOffset};
 };
 
 class DataNode : public Node {
@@ -85,11 +104,11 @@ public:
   void render() override;
 
 private:
-  Nodex::Filter::Mode m_filterMode{};
-  Nodex::Filter::Type m_filterType{};
-  int                 m_filterOrder{2};
-  double              m_cutoffFreq{100.0};
-  double              m_samplingFreq{1000.0};
+  Nodex::Filter::Mode m_filterMode{kDefaultFilterMode};
+  Nodex::Filter::Type m_filterType{kDefaultFilterType};
+  int                 m_filterOrder{kDefaultFilterOrder};
+  double              m_cutoffFreq{kDefaultCutoffFreq};
+  double              m_samplingFreq{kDefaultSamplingFreq};
 };
 } // namespace Nodex::App
 

@@ -13,32 +13,31 @@
 
 using Nodex::Filter::Signal;
 
+// function declarations
 void framebuffer_size_callback(GLFWwindow*, int, int);
 void processInput(GLFWwindow*);
+bool initGlfw();
 
 // settings
-constexpr int kWinWidth{1600};
-constexpr int kWinHeight{1200};
+constexpr int   kWinWidth{1280};
+constexpr int   kWinHeight{720};
+constexpr char  kGlslVersion[] = "#version 330 core";
+constexpr float kClearColor[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 using namespace Nodex::App;
 
 int main(void) {
   std::cout << "Nodex::Core v" << Nodex::Core::version() << "\n";
 
-  if (!glfwInit())
+  if (!initGlfw()) {
     return -1;
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+  }
 
   float mainScale{
       ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor())};
   GLFWwindow* window{
       glfwCreateWindow(kWinWidth, kWinHeight, "Nodex GUI", nullptr, nullptr)};
+
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
 
@@ -56,7 +55,7 @@ int main(void) {
     return -1;
   }
 
-  glViewport(0, 0, 800, 600);
+  glViewport(0, 0, kWinWidth, kWinHeight);
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -73,12 +72,7 @@ int main(void) {
   style.AntiAliasedLines = true;
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init("#version 330 core");
-
-  // Make sinusoidal data frequency of 5 Hz
-  // Amplitude of 1.0, sampled at 1000 Hz for 1 second
-  Eigen::ArrayXd sinData = Eigen::sin(Eigen::ArrayXd::LinSpaced(
-      1000, 0.0, 2.0 * std::numbers::pi * 5.0 * (999.0 / 1000.0)));
+  ImGui_ImplOpenGL3_Init(kGlslVersion);
 
   // initialize graph
   Graph graph;
@@ -87,7 +81,8 @@ int main(void) {
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(kClearColor[0], kClearColor[1], kClearColor[2],
+                 kClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_NewFrame();
@@ -124,4 +119,13 @@ void processInput(GLFWwindow* window) {
 void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width,
                                int height) {
   glViewport(0, 0, width, height);
+}
+
+bool initGlfw() {
+  if (!glfwInit()) {
+    std::cerr << "Failed to initialize GLFW\n";
+    return false;
+  }
+
+  return true;
 }
