@@ -83,6 +83,8 @@ ZPK analog2digital(ZPK analog, double fc, double fs, Mode mode = lowpass) {
 }
 
 ZPK cheb1ap(const int n, const double rp) {
+  using namespace std::complex_literals;
+
   if (n == 0)
     return {{}, {}, std::pow(10, -rp / 20.0)};
 
@@ -94,7 +96,7 @@ ZPK cheb1ap(const int n, const double rp) {
   const double mu{1.0 / n * std::asinh(1 / eps)};
 
   const ArrayXd m{arange(-n + 1, n, 2).cast<double>()};
-  const ArrayXd theta{pi * m / (2 * n)};
+  const ArrayXd theta{std::numbers::pi * m / (2 * n)};
   p = -(mu + 1i * theta.cast<Complex>()).sinh();
 
   double k{std::real((-p).prod())};
@@ -105,6 +107,7 @@ ZPK cheb1ap(const int n, const double rp) {
 }
 
 ZPK cheb2ap(const int n, const double rs) {
+  using namespace std::complex_literals;
   if (n == 0)
     return {{}, {}, 1};
 
@@ -122,10 +125,12 @@ ZPK cheb2ap(const int n, const double rs) {
   }
 
   const ArrayXcd z{
-      -(1i / (pi * m.cast<double>() / (2.0 * n)).sin()).conjugate()};
+      -(1i / (std::numbers::pi * m.cast<double>() / (2.0 * n)).sin())
+           .conjugate()};
 
   ArrayXcd p{
-      -(1i * pi * arange(-n + 1, n, 2).cast<Complex>() / (2 * n)).exp(),
+      -(1i * std::numbers::pi * arange(-n + 1, n, 2).cast<Complex>() / (2 * n))
+           .exp(),
   };
   p = std::sinh(mu) * p.real() + 1i * std::cosh(mu) * p.imag();
   p = p.cwiseInverse();
@@ -139,6 +144,8 @@ ZPK cheb2ap(const int n, const double rs) {
 }
 
 ZPK buttap(const int n) {
+  using namespace std::complex_literals;
+
   // no zeros
   std::vector<Complex> zVec(0);
   std::vector<Complex> pVec(static_cast<std::size_t>(n));
@@ -150,7 +157,7 @@ ZPK buttap(const int n) {
   // theta = pi * m / (2n)
   // p_k = -exp(j * theta)
   const ArrayXd m{arange(-n + 1, n, 2).cast<double>()};
-  const ArrayXd theta{pi * m / (2 * n)};
+  const ArrayXd theta{std::numbers::pi * m / (2 * n)};
   p = -(1i * theta).exp();
 
   return ZPK{zVec, pVec, 1.0};
@@ -177,7 +184,7 @@ ZPK iirFilter(const int n, double fc, double fs, const Type type,
 }
 
 double warpFreq(const double fc, const double fs) {
-  return std::tan(pi * fc / fs);
+  return std::tan(std::numbers::pi * fc / fs);
 }
 
 ZPK bilinearTransform(const ZPK& analog, const double fs) {
@@ -215,6 +222,8 @@ ZPK bilinearTransform(const ZPK& analog, const double fs) {
 
 ArrayXcd freqz(const EigenZPK&                  digitalFilter,
                const Eigen::Ref<const ArrayXd>& w) {
+  using namespace std::complex_literals;
+
   ArrayXcd h{w.size()};
   ArrayXcd zm1{(w * 1i).exp()};
 

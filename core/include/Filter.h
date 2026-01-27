@@ -8,10 +8,6 @@
 
 namespace Nodex {
 namespace Filter {
-// Using std aliases
-using namespace std::complex_literals;
-using std::numbers::pi;
-
 // Using Utils aliases
 using Nodex::Utils::Complex;
 using Nodex::Utils::Signal;
