@@ -129,7 +129,7 @@ protected:
 class Graph {
 public:
   template <typename T, typename... Args>
-  T* createNode(Args&&... args);
+  T*   createNode(Args&&... args);
   void removeNode(std::string_view name);
 
   std::vector<SharedPtr<Node>> getNodes() const;
@@ -220,8 +220,8 @@ void InPort<T>::connect(Port* port) {
     m_connected->disconnect(this);
   }
 
-  if (m_connected == outPort)
-    return; // already connected
+  if (m_connected == outPort) // already connected
+    return;
 
   m_connected = outPort;
   outPort->addConnection(dynamic_cast<InPort<T>*>(this));
@@ -260,12 +260,12 @@ OutPort<T>* Node::addOutput(std::string_view name, Function<T()> cb) {
 
 template <typename T>
 InPort<T>* Node::input(std::string_view name) {
-  return static_cast<InPort<T>*>(m_inputs.at(name).get());
+  return dynamic_cast<InPort<T>*>(m_inputs.at(name).get());
 }
 
 template <typename T>
 OutPort<T>* Node::output(std::string_view name) {
-  return static_cast<OutPort<T>*>(m_outputs.at(name).get());
+  return dynamic_cast<OutPort<T>*>(m_outputs.at(name).get());
 }
 
 template <typename T>
@@ -288,5 +288,4 @@ T* Graph::createNode(Args&&... args) {
   m_nodes.emplace(node->name(), std::move(node));
   return ptr;
 }
-
 } // namespace Nodex::Core

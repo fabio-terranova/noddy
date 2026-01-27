@@ -250,13 +250,24 @@ void graphWindow(Graph& graph) {
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
       if (ImGui::MenuItem("Exit")) {
-        // TODO: Handle exit action
+        // TODO: implement exit
+      } else if (ImGui::MenuItem("Save")) {
+        // TODO: implement save
+      } else if (ImGui::MenuItem("Load")) {
+        // TODO: implement load
       }
       ImGui::EndMenu();
     }
-
-    if (ImGui::BeginMenu("Node")) {
-      renderNodeMenu(graph);
+    if (ImGui::BeginMenu("Edit")) {
+      if (ImGui::MenuItem("Clear all")) {
+        auto nodes = graph.getNodes();
+        for (auto& node : nodes) {
+          graph.removeNode(node->name());
+        }
+      } else if (ImGui::BeginMenu("Add")) {
+        renderNodeMenu(graph);
+        ImGui::EndMenu();
+      }
       ImGui::EndMenu();
     }
 
@@ -264,12 +275,12 @@ void graphWindow(Graph& graph) {
 
     ImGui::EndMenuBar();
   }
-  
+
   if (ImGui::BeginPopupContextWindow("NodeGraphContextMenu")) {
     renderNodeMenu(graph);
     ImGui::EndPopup();
   }
-  
+
   ImGui::End();
 
   // Track which port was hovered during this frame

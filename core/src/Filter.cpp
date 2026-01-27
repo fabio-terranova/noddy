@@ -1,10 +1,6 @@
-#include "Filter.h"
 #include "FilterEigen.h"
 #include "Utils.h"
 #include <Eigen/Dense>
-#include <cassert>
-#include <cstddef>
-#include <iostream>
 #include <ostream>
 #include <ranges>
 #include <unsupported/Eigen/FFT>

@@ -3,7 +3,6 @@
 
 #include "Utils.h"
 #include <cstddef>
-#include <numbers>
 #include <vector>
 
 namespace Nodex {
