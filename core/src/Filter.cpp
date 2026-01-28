@@ -5,6 +5,8 @@
 #include <ranges>
 #include <unsupported/Eigen/FFT>
 #include <vector>
+#include <cassert>
+#include <numbers>
 
 #ifdef _OPENMP
 #include <omp.h>

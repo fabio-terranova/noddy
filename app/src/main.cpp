@@ -19,8 +19,8 @@ void processInput(GLFWwindow*);
 bool initGlfw();
 
 // settings
-constexpr int   kWinWidth{1280};
-constexpr int   kWinHeight{720};
+constexpr int   kWinWidth{1920};
+constexpr int   kWinHeight{1080};
 constexpr char  kGlslVersion[] = "#version 330 core";
 constexpr float kClearColor[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 

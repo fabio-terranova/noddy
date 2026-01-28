@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include <Eigen/Dense>
 #include <string_view>
+#include <iostream>
 
 namespace Nodex::App {
 using namespace Nodex::Filter;
@@ -42,14 +43,52 @@ void graphWindow(Graph& graph);
 
 class MixerNode : public Node {
 public:
-  MixerNode(std::string_view name);
+  MixerNode(std::string_view name, int inputs) : Node{name, "Mixer"}, m_inputs{inputs} {
+    m_gains.reserve(m_inputs);
+    for (int i = 0; i < m_inputs; ++i) {
+      std::string portName = "In " + std::to_string(i + 1);
+      addInput<Eigen::ArrayXd>(portName, Eigen::ArrayXd{});
+      m_gains[i] = kDefaultGain;
+    }
 
-  Eigen::ArrayXd getData(double k1, double k2);
-  void           render() override;
+    addOutput<Eigen::ArrayXd>("Out", [this]() { return getData(); });
+  }
+
+  Eigen::ArrayXd getData() {
+    Eigen::ArrayXd result;
+
+    Eigen::Index maxSize = 0;
+    for (int i = 0; i < m_inputs; ++i) {
+      auto data = inputValue<Eigen::ArrayXd>("In " + std::to_string(i + 1));
+      if (data.size() > maxSize) {
+        maxSize = data.size();
+      }
+    }
+
+    result = Eigen::ArrayXd::Zero(maxSize);
+    for (int i = 0; i < m_inputs; ++i) {
+      auto data = inputValue<Eigen::ArrayXd>("In " + std::to_string(i + 1));
+      if (data.size() > 0) {
+        // match size by padding with zeros if needed
+        Eigen::ArrayXd dataResized = Eigen::ArrayXd::Zero(maxSize);
+        dataResized.head(data.size()) = data;
+        result += m_gains[i] * dataResized;
+      }
+    }
+
+    return result;
+  }
+
+  void render() override {
+    for (int i = 0; i < m_inputs; ++i) {
+      ImGui::InputDouble(("Gain " + std::to_string(i + 1)).c_str(), &m_gains[i], 0.1, 1.0, "%.2f");
+    }
+  }
+
 
 private:
-  double m_gain1{kDefaultGain};
-  double m_gain2{kDefaultGain};
+  int m_inputs{};
+  std::vector<double> m_gains{};
 };
 
 class ViewerNode : public Node {

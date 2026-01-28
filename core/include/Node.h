@@ -1,6 +1,7 @@
 #include "Core.h"
 #include <string>
 #include <string_view>
+#include <stdexcept>
 
 namespace Nodex::Core {
 using PortID = std::size_t;
@@ -93,8 +94,12 @@ public:
   template <typename T>
   OutPort<T>* output(std::string_view name);
 
-  Port* inputPort(std::string_view name) { return m_inputs.at(name).get(); }
-  Port* outputPort(std::string_view name) { return m_outputs.at(name).get(); }
+  Port* inputPort(std::string_view name) {
+    return m_inputs.at(std::string{name}).get();
+  }
+  Port* outputPort(std::string_view name) {
+    return m_outputs.at(std::string{name}).get();
+  }
 
   template <typename T>
   const T& inputValue(std::string_view name);
@@ -120,8 +125,8 @@ protected:
   std::string m_label{"Node"};
   Graph*      m_graph{};
 
-  Map<std::string_view, UniquePtr<Port>> m_inputs;
-  Map<std::string_view, UniquePtr<Port>> m_outputs;
+  Map<std::string, UniquePtr<Port>> m_inputs;
+  Map<std::string, UniquePtr<Port>> m_outputs;
 
   NodeID m_id{};
 };
@@ -136,6 +141,7 @@ public:
 
   std::size_t frame() const { return m_frame; }
   void        update() { ++m_frame; }
+  void        clear() { m_nodes.clear(); m_nextNodeID = 0; }
 
   NodeID numberOfNodes() const { return m_nextNodeID; }
 
@@ -246,7 +252,7 @@ template <typename T>
 InPort<T>* Node::addInput(std::string_view name, T defaultValue) {
   auto port = std::make_unique<InPort<T>>(name, std::move(defaultValue), this);
   auto ptr  = port.get();
-  m_inputs.emplace(name, std::move(port));
+  m_inputs.emplace(std::string{name}, std::move(port));
   return ptr;
 }
 
@@ -254,18 +260,18 @@ template <typename T>
 OutPort<T>* Node::addOutput(std::string_view name, Function<T()> cb) {
   auto port = std::make_unique<OutPort<T>>(name, std::move(cb), this);
   auto ptr  = port.get();
-  m_outputs.emplace(name, std::move(port));
+  m_outputs.emplace(std::string{name}, std::move(port));
   return ptr;
 }
 
 template <typename T>
 InPort<T>* Node::input(std::string_view name) {
-  return dynamic_cast<InPort<T>*>(m_inputs.at(name).get());
+  return dynamic_cast<InPort<T>*>(m_inputs.at(std::string{name}).get());
 }
 
 template <typename T>
 OutPort<T>* Node::output(std::string_view name) {
-  return dynamic_cast<OutPort<T>*>(m_outputs.at(name).get());
+  return dynamic_cast<OutPort<T>*>(m_outputs.at(std::string{name}).get());
 }
 
 template <typename T>

@@ -5,6 +5,7 @@
 #include "implot.h"
 #include <numbers>
 #include <string>
+#include <iostream>
 
 namespace ImGui {
 inline bool SliderDouble(const char* label, double* v, double v_min,
@@ -25,33 +26,12 @@ constexpr float kBezierOffset  = 50.0f; // Bezier curve control point offset
 constexpr double kTwoPi        = 2.0 * std::numbers::pi;
 constexpr float  kPlotWidth    = 200.0f;
 constexpr float  kPlotHeight   = 150.0f;
+
+static int         s_mixerInputs          = 2;
+static bool        s_openMixerModal       = false;
+static std::string s_pendingMixerNodeName = {};
+
 // MixerNode
-MixerNode::MixerNode(std::string_view name) : Node{name, "Mixer"} {
-  addInput<Eigen::ArrayXd>("In 1", Eigen::ArrayXd{});
-  addInput<Eigen::ArrayXd>("In 2", Eigen::ArrayXd{});
-  addOutput<Eigen::ArrayXd>("Out",
-                            [this]() { return getData(m_gain1, m_gain2); });
-}
-
-Eigen::ArrayXd MixerNode::getData(double k1, double k2) {
-  auto in1{inputValue<Eigen::ArrayXd>("In 1")};
-  auto in2{inputValue<Eigen::ArrayXd>("In 2")};
-
-  if (in1.size() < in2.size()) {
-    in1.conservativeResize(in2.size());
-    in1.tail(in2.size() - in1.size()).setZero();
-  } else if (in2.size() < in1.size()) {
-    in2.conservativeResize(in1.size());
-    in2.tail(in1.size() - in2.size()).setZero();
-  }
-
-  return k1 * in1 + k2 * in2;
-}
-
-void MixerNode::render() {
-  ImGui::InputDouble("Gain 1", &m_gain1, 0.1, 1.0, "%.2f");
-  ImGui::InputDouble("Gain 2", &m_gain2, 0.1, 1.0, "%.2f");
-}
 
 // ViewerNode
 ViewerNode::ViewerNode(std::string_view name) : Node{name, "Viewer"} {
@@ -221,8 +201,10 @@ void renderNodeMenu(Graph& graph) {
   if (ImGui::MenuItem("Sine wave"))
     graph.createNode<SineNode>(nodeName);
 
-  if (ImGui::MenuItem("Mixer"))
-    graph.createNode<MixerNode>(nodeName);
+  if (ImGui::MenuItem("Mixer")) {
+    s_pendingMixerNodeName = nodeName;
+    s_openMixerModal        = true;
+  }
 
   if (ImGui::MenuItem("Filter"))
     graph.createNode<FilterNode>(nodeName);
@@ -260,10 +242,7 @@ void graphWindow(Graph& graph) {
     }
     if (ImGui::BeginMenu("Edit")) {
       if (ImGui::MenuItem("Clear all")) {
-        auto nodes = graph.getNodes();
-        for (auto& node : nodes) {
-          graph.removeNode(node->name());
-        }
+        graph.clear();
       } else if (ImGui::BeginMenu("Add")) {
         renderNodeMenu(graph);
         ImGui::EndMenu();
@@ -278,6 +257,21 @@ void graphWindow(Graph& graph) {
 
   if (ImGui::BeginPopupContextWindow("NodeGraphContextMenu")) {
     renderNodeMenu(graph);
+    ImGui::EndPopup();
+  }
+
+  if (s_openMixerModal) {
+    ImGui::OpenPopup("Mixer Inputs");
+    s_openMixerModal = false;
+  }
+  if (ImGui::BeginPopupModal("Mixer Inputs", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::InputInt("Number of inputs", &s_mixerInputs);
+    if (ImGui::Button("OK")) {
+      graph.createNode<MixerNode>(s_pendingMixerNodeName, s_mixerInputs);
+      s_pendingMixerNodeName.clear();
+      ImGui::CloseCurrentPopup();
+    }
     ImGui::EndPopup();
   }
 
