@@ -65,7 +65,7 @@ public:
     Eigen::ArrayXd result;
 
     Eigen::Index maxSize = 0;
-    for (int i = 0; i < m_inputs; ++i) {
+    for (std::size_t i{0}; i < m_inputs; ++i) {
       auto data = inputValue<Eigen::ArrayXd>("In " + std::to_string(i + 1));
       if (data.size() > maxSize) {
         maxSize = data.size();
@@ -73,7 +73,7 @@ public:
     }
 
     result = Eigen::ArrayXd::Zero(maxSize);
-    for (int i = 0; i < m_inputs; ++i) {
+    for (std::size_t i{0}; i < m_inputs; ++i) {
       auto data = inputValue<Eigen::ArrayXd>("In " + std::to_string(i + 1));
       if (data.size() > 0) {
         // match size by padding with zeros if needed
