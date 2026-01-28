@@ -26,6 +26,7 @@ target_include_directories(nodex_gui
 
 target_link_libraries(nodex_gui PRIVATE
     nodex_core
+    nfd
     glfw
     OpenGL::GL
 )

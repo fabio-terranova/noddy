@@ -11,6 +11,7 @@ target_include_directories(nodex_core PUBLIC include)
 target_link_libraries(nodex_core PUBLIC
     eigen
     OpenMP::OpenMP_CXX
+    nlohmann_json::nlohmann_json
 )
 
 # Enable import library generation on Windows

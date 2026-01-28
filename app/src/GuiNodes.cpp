@@ -3,9 +3,10 @@
 #include "FilterEigen.h"
 #include "imgui.h"
 #include "implot.h"
+#include "nlohmann/json_fwd.hpp"
+#include <iostream>
 #include <numbers>
 #include <string>
-#include <iostream>
 
 namespace ImGui {
 inline bool SliderDouble(const char* label, double* v, double v_min,
@@ -31,10 +32,76 @@ static int         s_mixerInputs          = 2;
 static bool        s_openMixerModal       = false;
 static std::string s_pendingMixerNodeName = {};
 
+Graph loadJson(const std::string& jsonString) {
+  Graph          graph;
+  nlohmann::json j{nlohmann::json::parse(jsonString)};
+
+  for (const auto& nodeArray : j["nodes"]) {
+    for (const auto& nodeJson : nodeArray) {
+      std::string nodeName = nodeJson["name"];
+      std::string nodeType = nodeJson["type"];
+
+      if (nodeType == "RandomDataNode") {
+        int size = nodeJson["parameters"]["samples"];
+        graph.createNode<RandomDataNode>(nodeName, size);
+      } else if (nodeType == "SineNode") {
+        int    size   = nodeJson["parameters"]["samples"];
+        double fs     = nodeJson["parameters"]["fs"];
+        double freq   = nodeJson["parameters"]["frequency"];
+        double amp    = nodeJson["parameters"]["amplitude"];
+        double phase  = nodeJson["parameters"]["phase"];
+        double offset = nodeJson["parameters"]["offset"];
+        graph.createNode<SineNode>(nodeName, size, freq, amp, phase, fs,
+                                   offset);
+      } else if (nodeType == "MixerNode") {
+        int                 numInputs = nodeJson["parameters"]["inputs"];
+        std::vector<double> gains =
+            nodeJson["parameters"]["gains"].get<std::vector<double>>();
+        graph.createNode<MixerNode>(nodeName, numInputs, gains);
+      } else if (nodeType == "FilterNode") {
+        Filter::Mode mode =
+            static_cast<Filter::Mode>(nodeJson["parameters"]["filter_mode"]);
+        Filter::Type type =
+            static_cast<Filter::Type>(nodeJson["parameters"]["filter_type"]);
+        int    order        = nodeJson["parameters"]["filter_order"];
+        double cutoffFreq   = nodeJson["parameters"]["cutoff_freq"];
+        double samplingFreq = nodeJson["parameters"]["sampling_freq"];
+        graph.createNode<FilterNode>(nodeName, mode, type, order, cutoffFreq,
+                                     samplingFreq);
+      } else if (nodeType == "ViewerNode") {
+        graph.createNode<ViewerNode>(nodeName);
+      }
+    }
+  }
+
+  for (const auto& nodeArray : j["nodes"]) {
+    for (const auto& nodeJson : nodeArray) {
+      std::string nodeName = nodeJson["name"];
+      auto        node     = graph.getNodesMap().at(nodeName);
+
+      for (const auto& inputJson : nodeJson["inputs"]) {
+        std::string inputName = inputJson["name"];
+        if (inputJson.contains("connection")) {
+          std::string connectedNodeName = inputJson["connection"]["node"];
+          std::string connectedPortName = inputJson["connection"]["port"];
+
+          auto connectedNode = graph.getNodesMap().at(connectedNodeName);
+          auto outPort       = connectedNode->outputPort(connectedPortName);
+          auto inPort        = node->inputPort(inputName);
+
+          inPort->connect(outPort);
+        }
+      }
+    }
+  }
+
+  return graph;
+}
+
 // MixerNode
 
 // ViewerNode
-ViewerNode::ViewerNode(std::string_view name) : Node{name, "Viewer"} {
+ViewerNode::ViewerNode(const std::string_view name) : Node{name, "Viewer"} {
   addInput<Eigen::ArrayXd>("In", Eigen::ArrayXd{});
 }
 
@@ -51,7 +118,7 @@ void ViewerNode::render() {
 }
 
 // RandomDataNode
-RandomDataNode::RandomDataNode(std::string_view name, int size)
+RandomDataNode::RandomDataNode(const std::string_view name, const int size)
     : Node{name, "Random data"}, m_samples{size},
       m_data{Eigen::ArrayXd::Random(size)} {
   addOutput<Eigen::ArrayXd>("Out", [this]() { return m_data; });
@@ -63,7 +130,12 @@ void RandomDataNode::render() {
 }
 
 // SineNode
-SineNode::SineNode(std::string_view name) : Node{name, "Sine wave"} {
+SineNode::SineNode(const std::string_view name, const int size,
+                   const double frequency, const double amplitude,
+                   const double phase, const double fs, const double offset)
+    : Node{name, "Sine wave"}, m_samples{size}, m_frequency{frequency},
+      m_amplitude{amplitude}, m_phase{phase}, m_samplingFreq{fs},
+      m_offset{offset} {
   addOutput<Eigen::ArrayXd>("Out", [this]() { return generateWave(); });
 }
 
@@ -83,22 +155,18 @@ void SineNode::render() {
   ImGui::SliderDouble("f (Hz)", &m_frequency, 0.1, m_samplingFreq / 2, "%.2f");
   ImGui::InputDouble("Amplitude", &m_amplitude, 0.1, 1.0, "%.2f");
   ImGui::SliderDouble("Phase (rad)", &m_phase, 0.0, kTwoPi, "%.2f");
-  ImGui::InputDouble("fs (Hz)", &m_samplingFreq, 10.0, 10000.0, "%.2f");
+  ImGui::InputDouble("fs (Hz)", &m_samplingFreq, 10.0, 100.0, "%.2f");
   ImGui::InputDouble("Offset", &m_offset, 0.1, 1.0, "%.2f");
 }
 
-// DataNode
-DataNode::DataNode(std::string_view name, Eigen::ArrayXd& data)
-    : Node{name, "Data"}, m_data{data} {
-  addOutput<Eigen::ArrayXd>("Out", [this]() { return m_data; });
-}
-
-void DataNode::render() {
-  ImGui::Text("Number of samples: %d", static_cast<int>(m_data.size()));
-}
-
 // FilterNode
-FilterNode::FilterNode(std::string_view name) : Node{name, "Filter"} {
+FilterNode::FilterNode(const std::string_view    name,
+                       const Nodex::Filter::Mode mode,
+                       const Nodex::Filter::Type type, const int order,
+                       const double cutoffFreq, const double samplingFreq)
+    : Node{name, "Filter"}, m_filterMode{mode}, m_filterType{type},
+      m_filterOrder{order}, m_cutoffFreq{cutoffFreq},
+      m_samplingFreq{samplingFreq} {
   addInput<Eigen::ArrayXd>("In", Eigen::ArrayXd{});
   addOutput<Eigen::ArrayXd>("Out", [this]() {
     auto inputData{inputValue<Eigen::ArrayXd>("In")};
@@ -203,7 +271,7 @@ void renderNodeMenu(Graph& graph) {
 
   if (ImGui::MenuItem("Mixer")) {
     s_pendingMixerNodeName = nodeName;
-    s_openMixerModal        = true;
+    s_openMixerModal       = true;
   }
 
   if (ImGui::MenuItem("Filter"))
@@ -231,21 +299,21 @@ void graphWindow(Graph& graph) {
   {
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
-      if (ImGui::MenuItem("Exit")) {
-        // TODO: implement exit
-      } else if (ImGui::MenuItem("Save")) {
+      if (ImGui::MenuItem("Save")) {
         // TODO: implement save
+        nlohmann::json j = graph.serialize();
+        std::cout << j.dump(2) << "\n";
       } else if (ImGui::MenuItem("Load")) {
         // TODO: implement load
       }
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Edit")) {
-      if (ImGui::MenuItem("Clear all")) {
-        graph.clear();
-      } else if (ImGui::BeginMenu("Add")) {
+      if (ImGui::BeginMenu("Add")) {
         renderNodeMenu(graph);
         ImGui::EndMenu();
+      } else if (ImGui::MenuItem("Clear all")) {
+        graph.clear();
       }
       ImGui::EndMenu();
     }

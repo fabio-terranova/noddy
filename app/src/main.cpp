@@ -4,6 +4,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
+#include "nfd.hpp"
 #include <Eigen/Dense>
 // clang-format off
 #include <glad/glad.h>
@@ -28,6 +29,9 @@ using namespace Nodex::App;
 
 int main(void) {
   std::cout << "Nodex::Core v" << Nodex::Core::version() << "\n";
+
+  // init NFD
+  NFD::Guard nfdGuard;
 
   if (!initGlfw()) {
     return -1;

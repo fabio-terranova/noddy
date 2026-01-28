@@ -1,7 +1,9 @@
 #include "Core.h"
+#include "nlohmann/json.hpp"
+#include "nlohmann/json_fwd.hpp"
+#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <stdexcept>
 
 namespace Nodex::Core {
 using PortID = std::size_t;
@@ -17,7 +19,8 @@ public:
 
   std::string_view name() const { return m_name; }
 
-  void setNode(Node* node) { m_node = node; }
+  void  setNode(Node* node) { m_node = node; }
+  Node* node() const { return m_node; }
 
   virtual void connect(Port*) {}
   virtual void disconnect(Port*) {}
@@ -25,6 +28,13 @@ public:
 
   virtual Port* connected() const { return nullptr; }
   virtual bool  connected(Port*) const { return false; }
+
+  virtual nlohmann::json serialize() const {
+    nlohmann::json j;
+    j["name"] = m_name;
+
+    return j;
+  }
 
 protected:
   std::string m_name;
@@ -50,6 +60,20 @@ public:
 
   bool connected(Port* port) const override;
 
+  nlohmann::json serialize() const override {
+    nlohmann::json j = Port::serialize();
+    // Serialize connected ports Node -> Port names
+    j["connections"] = nlohmann::json::array();
+    for (const auto& inPort : m_connectedPorts) {
+      nlohmann::json conn;
+      conn["node"] = inPort->node()->name();
+      conn["port"] = inPort->name();
+      j["connections"].push_back(conn);
+    }
+
+    return j;
+  }
+
 private:
   Function<T()>           m_cb;
   T                       m_value{};
@@ -69,6 +93,16 @@ public:
 
   Port* connected() const override { return m_connected; }
   bool  connected(Port* port) const override { return m_connected == port; }
+
+  nlohmann::json serialize() const override {
+    nlohmann::json j = Port::serialize();
+    if (m_connected) {
+      j["connection"]["node"] = m_connected->node()->name();
+      j["connection"]["port"] = m_connected->name();
+    }
+
+    return j;
+  }
 
 private:
   OutPort<T>* m_connected{};
@@ -120,6 +154,22 @@ public:
 
   virtual void render() {}
 
+  virtual nlohmann::json serialize() const {
+    nlohmann::json j{};
+    j["name"]  = m_name;
+    j["label"] = m_label;
+    j["id"]    = m_id;
+
+    for (const auto& [name, port] : m_inputs) {
+      j["inputs"].push_back(port->serialize());
+    }
+    for (const auto& [name, port] : m_outputs) {
+      j["outputs"].push_back(port->serialize());
+    }
+
+    return j;
+  }
+
 protected:
   std::string m_name;
   std::string m_label{"Node"};
@@ -137,13 +187,19 @@ public:
   T*   createNode(Args&&... args);
   void removeNode(std::string_view name);
 
-  std::vector<SharedPtr<Node>> getNodes() const;
+  std::vector<SharedPtr<Node>>                    getNodes() const;
+  UnorderedMap<std::string_view, SharedPtr<Node>> getNodesMap() const;
 
   std::size_t frame() const { return m_frame; }
   void        update() { ++m_frame; }
-  void        clear() { m_nodes.clear(); m_nextNodeID = 0; }
+  void        clear() {
+    m_nodes.clear();
+    m_nextNodeID = 0;
+  }
 
   NodeID numberOfNodes() const { return m_nextNodeID; }
+
+  nlohmann::json serialize() const;
 
 private:
   UnorderedMap<std::string_view, SharedPtr<Node>> m_nodes;

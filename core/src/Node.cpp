@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "nlohmann/json_fwd.hpp"
 
 namespace Nodex::Core {
 // Port implementation
@@ -33,6 +34,10 @@ std::vector<SharedPtr<Node>> Graph::getNodes() const {
   return nodes;
 }
 
+UnorderedMap<std::string_view, SharedPtr<Node>> Graph::getNodesMap() const {
+  return m_nodes;
+}
+
 void Graph::removeNode(std::string_view name) {
   auto it = m_nodes.find(name);
   if (it == m_nodes.end())
@@ -55,5 +60,15 @@ void Graph::removeNode(std::string_view name) {
   m_nodes.erase(it);
 
   m_nextNodeID--;
+}
+
+nlohmann::json Graph::serialize() const {
+  // for each node, serialize its data
+  nlohmann::json j;
+  for (const auto& [name, node] : m_nodes) {
+    j["nodes"].push_back(node->serialize());
+  }
+
+  return j;
 }
 } // namespace Nodex::Core
