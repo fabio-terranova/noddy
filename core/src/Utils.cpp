@@ -225,7 +225,7 @@ Eigen::ArrayXd computeFFT(const Eigen::Ref<const Eigen::VectorXd>& signal) {
   Eigen::VectorXcd freqDomain;
   fft.fwd(freqDomain, signal);
 
-  return freqDomain.cwiseAbs().real();
+  return freqDomain.head((freqDomain.size() + 1) / 2).cwiseAbs().real();
 }
 
 Eigen::ArrayXd generateTimeVector(const Eigen::Index length, const double fs) {

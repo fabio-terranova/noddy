@@ -198,11 +198,14 @@ void MultiViewerNode::render() {
 
       for (std::size_t i{0}; i < m_inputs; ++i) {
         auto data{inputValue<Eigen::ArrayXd>("In " + std::to_string(i + 1))};
-        auto fft{computeFFT(data)};
-        auto x{generateFrequencyVector(fft.size(), m_samplingFreq)};
 
-        ImPlot::PlotLine(("Input " + std::to_string(i + 1)).c_str(), x.data(),
-                         fft.data(), static_cast<int>(fft.size()));
+        if (data.size() > 0) {
+          auto fft{computeFFT(data)};
+          auto x{generateFrequencyVector(fft.size(), m_samplingFreq)};
+
+          ImPlot::PlotLine(("Input " + std::to_string(i + 1)).c_str(), x.data(),
+                           fft.data(), static_cast<int>(fft.size()));
+        }
       }
       ImPlot::EndPlot();
     }
